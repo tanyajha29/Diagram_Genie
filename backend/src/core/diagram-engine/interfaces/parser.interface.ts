@@ -1,7 +1,8 @@
 import { Diagram } from './diagram.interface';
 
-export interface DiagramParser {
+export interface IParser {
   id: string;
-  supportedTypes: string[]; // ['sql', 'markdown', 'typescript']
+  supports(sourceType: string): boolean;
+  validate(source: string): boolean;
   parse(source: string, options?: Record<string, any>): Promise<Diagram>;
 }

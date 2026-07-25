@@ -1,34 +1,100 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Search, Heart, ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react';
-import { toolsConfig } from '../config/tools';
-import { MiniPreview } from '../components/diagram/MiniPreviews';
+import { Heart, ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react';
+import { categoriesConfig } from '../config/tools';
+import { CategoryPreview } from '../components/diagram/CategoryPreviews';
 import { WatchAiBuild } from '../components/landing/WatchAiBuild';
 import { motion } from 'framer-motion';
 import { fadeUp, staggerContainer, pageTransition } from '../utils/animations';
 
+const CategoryCard: React.FC<{
+  category: typeof categoriesConfig[0];
+  onClick: () => void;
+}> = ({ category, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left - rect.width / 2) * 0.06;
+    const y = (e.clientY - rect.top - rect.height / 2) * 0.06;
+    setCoords({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setCoords({ x: 0, y: 0 });
+  };
+
+  return (
+    <motion.div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+      style={{
+        transform: `perspective(1000px) rotateX(${-coords.y}deg) rotateY(${coords.x}deg) translateY(${isHovered ? -6 : 0}px)`
+      }}
+      className={`group cursor-pointer rounded-2xl border bg-white/60 dark:bg-slate-900/40 p-6 flex flex-col justify-between min-h-[350px] transition-all duration-300 relative overflow-hidden select-none ${
+        isHovered
+          ? 'border-brand-orange/40 shadow-[0_12px_40px_rgba(255,107,53,0.12)]'
+          : 'border-slate-200/60 dark:border-slate-800/50 shadow-[0_8px_30px_rgba(0,0,0,0.01)]'
+      }`}
+    >
+      {/* Background blueprint grid activation on hover */}
+      <div 
+        className={`absolute inset-0 blueprint-grid opacity-[0.03] dark:opacity-[0.05] transition-opacity duration-300 pointer-events-none ${
+          isHovered ? 'opacity-[0.08] dark:opacity-[0.1]' : ''
+        }`} 
+      />
+
+      <div className="space-y-6 relative z-10">
+        {/* Animated preview SVG category showcase */}
+        <div className="w-full rounded-xl bg-slate-100/50 dark:bg-slate-950/30 border border-slate-200/40 dark:border-slate-800/30 overflow-hidden flex items-center justify-center p-2 group-hover:border-brand-orange/20 transition-all duration-300">
+          <CategoryPreview id={category.id} isHovered={isHovered} />
+        </div>
+
+        {/* Info */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <motion.span 
+              animate={isHovered ? { rotate: [0, -10, 10, 0] } : {}}
+              transition={{ duration: 0.5 }}
+              className="text-xl shrink-0"
+            >
+              {category.icon}
+            </motion.span>
+            <h3 className="text-md font-bold text-slate-800 dark:text-white group-hover:text-brand-orange transition-colors">
+              {category.name}
+            </h3>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
+            {category.description}
+          </p>
+        </div>
+      </div>
+
+      {/* Footer / Badge */}
+      <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-900/60 mt-4 relative z-10">
+        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded-md">
+          {category.toolCount} Tools
+        </span>
+        <div className="flex items-center space-x-1 text-slate-400 dark:text-slate-500 group-hover:text-brand-orange transition-colors">
+          <span className="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:mr-1">Explore</span>
+          <motion.div
+            animate={isHovered ? { x: [0, 4, 0] } : {}}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Tools');
-
-  const categories = ['All Tools', 'Architecture', 'Database', 'UML', 'Flow', 'Mind Maps', 'Cloud'];
-
-  const filteredTools = useMemo(() => {
-    return toolsConfig.filter((tool) => {
-      const matchesSearch = 
-        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = 
-        selectedCategory === 'All Tools' || 
-        tool.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-        (selectedCategory === 'Flow' && tool.category === 'Flow') ||
-        (selectedCategory === 'Mind Maps' && tool.category === 'Mind Maps');
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, selectedCategory]);
 
   return (
     <motion.div
@@ -54,92 +120,23 @@ export const Landing: React.FC = () => {
         </motion.p>
       </section>
 
-      {/* Tools Catalog Shell */}
-      <section className="space-y-8">
-        {/* Search and Category filters */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl glass-effect shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-          {/* Pills */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-[1.02]'
-                    : 'bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Search bar */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search tools..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/30 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Tools Grid */}
+      {/* Explore Diagram Engines */}
+      <section className="space-y-12">
+        {/* Responsive Categories Grid */}
         <motion.div 
           variants={staggerContainer()}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto px-4"
         >
-          {filteredTools.map((tool) => (
-            <motion.div
-              variants={fadeUp}
-              key={tool.id}
-              onClick={() => navigate(`/tools/${tool.id}`)}
-              className="group cursor-pointer rounded-2xl border border-slate-200/60 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/40 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_12px_40px_rgba(255,107,53,0.08)] hover:border-brand-orange/30 hover:scale-[1.01] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[300px]"
-            >
-              <div className="space-y-4">
-                {/* Visual Preview */}
-                <MiniPreview type={tool.parserType} />
-
-                {/* Info */}
-                <div className="space-y-1">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{tool.category}</span>
-                  <h3 className="text-md font-bold text-slate-800 dark:text-white group-hover:text-brand-orange transition-colors">
-                    {tool.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal leading-relaxed">
-                    {tool.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Action */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-900 mt-4">
-                <div className="flex items-center space-x-1.5">
-                  {tool.supportedInputs.slice(0, 3).map((ext) => (
-                    <span key={ext} className="text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400">
-                      {ext}
-                    </span>
-                  ))}
-                </div>
-                <div className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-brand-orange group-hover:border-brand-orange transition-all duration-300">
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-            </motion.div>
+          {categoriesConfig.map((cat) => (
+            <CategoryCard 
+              key={cat.id} 
+              category={cat} 
+              onClick={() => navigate(`/tools/${cat.id}`)} 
+            />
           ))}
         </motion.div>
-
-        {filteredTools.length === 0 && (
-          <div className="text-center py-12 glass-effect rounded-2xl">
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">No tools found matching your request.</p>
-          </div>
-        )}
       </section>
 
       {/* Immersive Watch AI Build Section */}
@@ -148,7 +145,7 @@ export const Landing: React.FC = () => {
       {/* Why Diagram Genie (Why I Heart Diagram) */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div className="space-y-6 flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-brand-navy dark:text-white">Why I <Heart className="w-6 h-6 inline-block text-brand-orange fill-brand-orange" /> Diagram</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-brand-navy dark:text-white">Why I <Heart className="w-6 h-6 inline-block text-brand-orange fill-brand-orange animate-pulse-slow" /> Diagram</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
             Building software diagrams shouldn't feel like drawing pixels by hand. Diagram Genie decouples structure from visual style, allowing developers and architects to generate, lay out, and configure diagrams in seconds using simple rule formats.
           </p>
@@ -207,7 +204,7 @@ export const Landing: React.FC = () => {
 
           <div className="flex items-center justify-between border-t border-slate-200/40 dark:border-slate-800/30 pt-4 relative z-10">
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Generate diagrams in less than 3 seconds.</span>
-            <Link to="/tools" className="text-xs font-bold text-brand-orange hover:text-brand-orange-hover flex items-center space-x-1">
+            <Link to="/tools/software-architecture" className="text-xs font-bold text-brand-orange hover:text-brand-orange-hover flex items-center space-x-1">
               <span>Try standard generators</span>
               <ChevronRight className="w-4 h-4" />
             </Link>

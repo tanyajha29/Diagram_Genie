@@ -6,10 +6,28 @@ import { useDiagramStore } from '../store/diagramStore';
 import { Upload, ClipboardList, FileText, Cpu, ArrowLeft, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageTransition } from '../utils/animations';
+import { CategoryPage } from './CategoryPage';
 
 export const ToolPage: React.FC = () => {
   const { toolId } = useParams<{ toolId: string }>();
   const navigate = useNavigate();
+
+  // Check if URL matches a category page
+  const categoryIds = [
+    'software-architecture',
+    'database-engineering',
+    'uml',
+    'flow-process',
+    'cloud-devops',
+    'api-backend',
+    'project-documentation',
+    'ai-machine-learning'
+  ];
+  const isCategory = categoryIds.includes(toolId || '');
+
+  if (isCategory) {
+    return <CategoryPage categoryId={toolId!} />;
+  }
   
   const { initNewDiagram } = useDiagramStore();
   const [tool, setTool] = useState<ToolConfig | null>(null);

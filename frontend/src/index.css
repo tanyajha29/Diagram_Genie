@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* Enable class-based dark mode selector in Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  
+  --color-brand-orange: #FF6B35;
+  --color-brand-orange-hover: #FF7D4F;
+  --color-brand-navy: #0A192F;
+  --color-brand-slate: #0F172A;
+  
+  --animate-float-slow: float 8s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+/* Base custom styles */
+body {
+  font-family: var(--font-sans);
+  background-color: #FFFFFF;
+  color: var(--color-brand-slate);
+  overflow-x: hidden;
+  margin: 0;
+}
+
+/* Custom blueprint grid background styles */
+.blueprint-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(167, 198, 230, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(167, 198, 230, 0.08) 1px, transparent 1px);
+}
+
+.blueprint-grid-sub {
+  background-size: 8px 8px;
+  background-image: 
+    linear-gradient(to right, rgba(167, 198, 230, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(167, 198, 230, 0.03) 1px, transparent 1px);
+}
+
+/* Dark Mode Styles */
+.dark body {
+  background-color: #0B0F19;
+  color: #F8FAFC;
+}
+
+.dark .blueprint-grid {
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+}
+
+.dark .blueprint-grid-sub {
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.015) 1px, transparent 1px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Premium glassmorphic utilities */
+.glass-effect {
+  backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .glass-effect {
+  background-color: rgba(11, 15, 25, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+}
+
+.glass-card {
+  backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
+}
+
+.dark .glass-card {
+  background-color: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(30, 41, 59, 0.4);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Typography styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}

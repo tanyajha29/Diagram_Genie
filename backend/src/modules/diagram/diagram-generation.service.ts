@@ -10,6 +10,8 @@ export class DiagramGenerationService {
     return this.orchestrator.orchestrate(
       dto.source,
       dto.sourceType,
+      dto.filename,
+      dto.mimeType,
       dto.layoutEngineId,
       dto.options
     );

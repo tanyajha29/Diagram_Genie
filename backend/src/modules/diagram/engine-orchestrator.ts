@@ -2,11 +2,12 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ParserFactory } from '../../core/diagram-engine/factory/parser.factory';
 import { DiagramEngineRegistry } from '../../core/diagram-engine/registry/engine.registry';
 import { ReactFlowAdapter, ReactFlowGraph } from './adapters/react-flow.adapter';
-import { Diagram } from '../../core/diagram-engine/diagram-engine.module';
+import { Diagram, FileDetectionService, DetectedFileType } from '../../core/diagram-engine/diagram-engine.module';
 
 export interface OrchestratorResult {
   diagram: Diagram;
   reactFlow: ReactFlowGraph;
+  detectedType?: string;
   exportedFormats?: Record<string, string>;
 }
 
@@ -16,27 +17,53 @@ export class EngineOrchestrator {
 
   constructor(
     private readonly parserFactory: ParserFactory,
-    private readonly engineRegistry: DiagramEngineRegistry
+    private readonly engineRegistry: DiagramEngineRegistry,
+    private readonly fileDetectionService: FileDetectionService
   ) {}
 
   async orchestrate(
     source: string,
-    sourceType: string,
+    sourceType?: string,
+    filename?: string,
+    mimeType?: string,
     layoutEngineId?: string,
     options?: Record<string, any>
   ): Promise<OrchestratorResult> {
-    this.logger.log(`Starting generation orchestration pipeline for type: ${sourceType}`);
+    this.logger.log(`Starting generation orchestration pipeline`);
 
-    // 1. File Type / Engine Source detection (lowercase normalized)
-    const detectedType = sourceType.toLowerCase();
+    // 1. File Type / Engine Source detection (backend decides)
+    let detected: DetectedFileType;
+    let resolvedType = sourceType;
+
+    if (!resolvedType) {
+      detected = this.fileDetectionService.detect(filename, mimeType, source);
+      
+      const typeMapping: Record<DetectedFileType, string> = {
+        [DetectedFileType.README]: 'markdown',
+        [DetectedFileType.MARKDOWN]: 'markdown',
+        [DetectedFileType.SQL]: 'sql',
+        [DetectedFileType.PRISMA]: 'sql',
+        [DetectedFileType.DOCKER_COMPOSE]: 'architecture',
+        [DetectedFileType.TERRAFORM]: 'architecture',
+        [DetectedFileType.OPENAPI]: 'architecture',
+        [DetectedFileType.YAML]: 'architecture',
+        [DetectedFileType.JSON]: 'architecture',
+        [DetectedFileType.PLAIN_TEXT]: 'architecture',
+      };
+      
+      resolvedType = typeMapping[detected] || 'architecture';
+      this.logger.log(`Auto-resolved parser type: ${resolvedType} from file category: ${detected}`);
+    } else {
+      detected = DetectedFileType.PLAIN_TEXT;
+    }
 
     // 2. Parser Factory matching
-    const parser = this.parserFactory.createParser(detectedType);
+    const parser = this.parserFactory.createParser(resolvedType.toLowerCase());
 
     // 3. Parser Execution & Request Validation
     this.logger.debug(`Validating source syntax...`);
     if (!parser.validate(source)) {
-      throw new BadRequestException(`Syntax validation failed for source type: ${sourceType}`);
+      throw new BadRequestException(`Syntax validation failed for parser: ${parser.id}`);
     }
 
     this.logger.debug(`Parsing source elements...`);
@@ -58,6 +85,7 @@ export class EngineOrchestrator {
     return {
       diagram,
       reactFlow,
+      detectedType: detected,
       exportedFormats: {
         mermaid: '%% Export formatting pipeline hook placeholder',
       },

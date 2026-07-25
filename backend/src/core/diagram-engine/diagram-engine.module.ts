@@ -6,6 +6,7 @@ import { DiagramEngine } from './model/diagram-engine';
 import { SqlParser } from './parsers/sql.parser';
 import { MarkdownParser } from './parsers/markdown.parser';
 import { ArchitectureParser } from './parsers/architecture.parser';
+import { DefaultLayoutEngine } from './layout/default-layout.engine';
 
 @Module({
   providers: [
@@ -13,10 +14,12 @@ import { ArchitectureParser } from './parsers/architecture.parser';
     ParserRegistry,
     ParserFactory,
     DiagramEngine,
-    // Register parser plugins (constructors will self-register with ParserRegistry on DI init)
+    // Register parser plugins
     SqlParser,
     MarkdownParser,
     ArchitectureParser,
+    // Register layout engines
+    DefaultLayoutEngine,
   ],
   exports: [
     DiagramEngineRegistry,

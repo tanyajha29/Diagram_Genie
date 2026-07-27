@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractParser, ParserContext } from './abstract.parser';
 import { ParserRegistry } from '../registry/parser.registry';
+<<<<<<< HEAD
 import { Token, TokenType } from './lexer';
 import { NodeClassifier } from './node-classifier.service';
+=======
+import { Diagram, DiagramNode, DiagramEdge } from '../interfaces';
+>>>>>>> fdce0a732d6c96fc85c15858dec625355568c3ce
 
 @Injectable()
 export class MarkdownParser extends AbstractParser {
@@ -18,6 +22,7 @@ export class MarkdownParser extends AbstractParser {
 
   supports(sourceType: string): boolean {
     const type = sourceType.toLowerCase();
+<<<<<<< HEAD
     return type === 'markdown' || type === 'md';
   }
 
@@ -135,5 +140,220 @@ export class MarkdownParser extends AbstractParser {
         }
       }
     }
+=======
+    return type === 'markdown' || type === 'md' || type === 'readme';
+  }
+
+  validate(source: string): boolean {
+    return source.length > 0;
+  }
+
+  async parse(source: string, options?: Record<string, any>): Promise<Diagram> {
+    const nodes: DiagramNode[] = [];
+    const edges: DiagramEdge[] = [];
+    const lines = source.split('\n');
+
+    // Rule-based service type catalogs
+    const services = {
+      frontend: { label: 'Frontend App', keywords: ['react', 'next.js', 'nextjs', 'vue', 'angular', 'svelte', 'frontend', 'client', 'ui', 'dashboard', 'web app'], type: 'frontend' },
+      backend: { label: 'Backend API', keywords: ['nestjs', 'nest.js', 'express', 'node.js', 'django', 'flask', 'fastapi', 'spring boot', 'backend', 'api server', 'microservice'], type: 'backend' },
+      database: { label: 'Database Service', keywords: ['postgres', 'postgresql', 'mysql', 'mongodb', 'redis', 'prisma', 'sqlite', 'mariadb', 'dynamodb', 'cassandra', 'db'], type: 'database' },
+      queue: { label: 'Message Broker', keywords: ['rabbitmq', 'kafka', 'sqs', 'bullmq', 'redis queue', 'activemq', 'message broker', 'queue'], type: 'queue' },
+      external: { label: 'External API', keywords: ['stripe', 'sendgrid', 'auth0', 'firebase auth', 'google maps', 'twilio', 'external api', 'paypal', 'sentry'], type: 'external' }
+    };
+
+    const detectedNodes = new Map<string, { id: string; label: string; type: string }>();
+
+    // 1. Scan for key architectural keywords in lines
+    lines.forEach((line) => {
+      const lowerLine = line.toLowerCase();
+      
+      Object.entries(services).forEach(([key, serviceConfig]) => {
+        serviceConfig.keywords.forEach((keyword) => {
+          if (lowerLine.includes(keyword)) {
+            const nodeId = key;
+            if (!detectedNodes.has(nodeId)) {
+              detectedNodes.set(nodeId, {
+                id: nodeId,
+                label: serviceConfig.label,
+                type: serviceConfig.type
+              });
+            }
+          }
+        });
+      });
+    });
+
+    // 2. Scan for list item definitions (e.g. "- **PostgreSQL**: stores user data")
+    lines.forEach((line) => {
+      const match = line.match(/^[-*+]\s+\*\*(.*?)\*\*:\s*(.*)/);
+      if (match) {
+        const name = match[1].trim();
+        const nameLower = name.toLowerCase();
+
+        let type = 'service';
+        if (nameLower.includes('db') || nameLower.includes('postgres') || nameLower.includes('redis') || nameLower.includes('sql') || nameLower.includes('mongo')) {
+          type = 'database';
+        } else if (nameLower.includes('api') || nameLower.includes('server') || nameLower.includes('service') || nameLower.includes('backend')) {
+          type = 'backend';
+        } else if (nameLower.includes('ui') || nameLower.includes('client') || nameLower.includes('app') || nameLower.includes('frontend')) {
+          type = 'frontend';
+        } else if (nameLower.includes('queue') || nameLower.includes('kafka') || nameLower.includes('rabbit')) {
+          type = 'queue';
+        }
+
+        const nodeId = nameLower.replace(/\s+/g, '_');
+        detectedNodes.set(nodeId, {
+          id: nodeId,
+          label: name,
+          type: type
+        });
+      }
+    });
+
+    // Fallback: If no architectural components detected, fallback to header structure maps
+    if (detectedNodes.size === 0) {
+      return this.parseMarkdownAsTree(lines);
+    }
+
+    // Create UDM Node models without coordinates
+    detectedNodes.forEach((node, id) => {
+      nodes.push({
+        id,
+        type: node.type,
+        label: node.label,
+        position: { x: 0, y: 0 },
+        style: this.getNodeStyleForType(node.type)
+      });
+    });
+
+    // 3. Scan sentences/lines for relationship keywords/arrows to draw edges
+    lines.forEach((line) => {
+      const lowerLine = line.toLowerCase();
+
+      const connectionKeywords = [
+        { terms: ['connect', 'talk', 'call', 'query', 'request', 'send', 'write', 'read', 'use'], label: 'uses' },
+        { terms: ['->', '-->', '=>'], label: 'connects' }
+      ];
+
+      detectedNodes.forEach((nodeA, idA) => {
+        detectedNodes.forEach((nodeB, idB) => {
+          if (idA === idB) return;
+
+          const mentionsA = lowerLine.includes(nodeA.label.toLowerCase()) || lowerLine.includes(idA);
+          const mentionsB = lowerLine.includes(nodeB.label.toLowerCase()) || lowerLine.includes(idB);
+
+          if (mentionsA && mentionsB) {
+            let actionLabel = 'connects';
+            connectionKeywords.forEach((rule) => {
+              rule.terms.forEach((term) => {
+                if (lowerLine.includes(term)) {
+                  actionLabel = rule.label;
+                }
+              });
+            });
+
+            const exists = edges.some(e => e.source === idA && e.target === idB);
+            if (!exists) {
+              edges.push({
+                id: `edge_${idA}_${idB}`,
+                source: idA,
+                target: idB,
+                label: actionLabel,
+                animated: true
+              });
+            }
+          }
+        });
+      });
+    });
+
+    // Fallback links if no edges were found
+    if (edges.length === 0) {
+      const hasFrontend = detectedNodes.has('frontend');
+      const hasBackend = detectedNodes.has('backend');
+      const hasDatabase = detectedNodes.has('database');
+      const hasQueue = detectedNodes.has('queue');
+
+      if (hasFrontend && hasBackend) {
+        edges.push({ id: 'edge_fe_be', source: 'frontend', target: 'backend', label: 'API Request', animated: true });
+      }
+      if (hasBackend && hasDatabase) {
+        edges.push({ id: 'edge_be_db', source: 'backend', target: 'database', label: 'Queries', animated: false });
+      }
+      if (hasBackend && hasQueue) {
+        edges.push({ id: 'edge_be_q', source: 'backend', target: 'queue', label: 'Publishes', animated: true });
+      }
+    }
+
+    return {
+      id: `readme_${Date.now()}`,
+      title: 'Extracted Architecture Diagram',
+      nodes,
+      edges,
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        engineVersion: '1.0',
+        sourceType: 'readme'
+      }
+    };
+>>>>>>> fdce0a732d6c96fc85c15858dec625355568c3ce
+  }
+
+  private parseMarkdownAsTree(lines: string[]): Diagram {
+    const nodes: DiagramNode[] = [];
+    const edges: DiagramEdge[] = [];
+    let lastHeaderId: string | null = null;
+    let index = 0;
+
+    lines.forEach((line) => {
+      const headerMatch = line.match(/^(#{1,6})\s+(.*)/);
+      if (headerMatch) {
+        const level = headerMatch[1].length;
+        const title = headerMatch[2].trim();
+        const nodeId = `hdr_${index++}`;
+
+        nodes.push({
+          id: nodeId,
+          type: level === 1 ? 'root' : 'header',
+          label: title,
+          position: { x: 0, y: 0 }
+        });
+
+        if (lastHeaderId) {
+          edges.push({
+            id: `edge_${lastHeaderId}_${nodeId}`,
+            source: lastHeaderId,
+            target: nodeId
+          });
+        }
+        lastHeaderId = nodeId;
+      }
+    });
+
+    return {
+      id: `md_tree_${Date.now()}`,
+      title: 'Markdown Header Structure',
+      nodes,
+      edges,
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        engineVersion: '1.0',
+        sourceType: 'markdown'
+      }
+    };
+  }
+
+  private getNodeStyleForType(type: string) {
+    const styles: Record<string, any> = {
+      frontend: { backgroundColor: '#0f172a', borderColor: '#3b82f6', textColor: '#3b82f6', borderWidth: 2 },
+      backend: { backgroundColor: '#0f172a', borderColor: '#10b981', textColor: '#10b981', borderWidth: 2 },
+      database: { backgroundColor: '#0f172a', borderColor: '#f59e0b', textColor: '#f59e0b', borderWidth: 2 },
+      queue: { backgroundColor: '#0f172a', borderColor: '#8b5cf6', textColor: '#8b5cf6', borderWidth: 2 },
+      external: { backgroundColor: '#0f172a', borderColor: '#ec4899', textColor: '#ec4899', borderWidth: 2 }
+    };
+    return styles[type] || { backgroundColor: '#0f172a', borderColor: '#94a3b8', textColor: '#94a3b8', borderWidth: 1 };
   }
 }

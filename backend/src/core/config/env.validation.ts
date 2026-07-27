@@ -4,6 +4,8 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),
   API_PREFIX: z.string().default('api'),
+  GEMINI_API_KEY: z.string().optional(),
+  AI_ENABLED: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -1,3 +1,6 @@
+import { Injectable } from '@nestjs/common';
+import { IRendererAdapter } from '../interfaces/renderer-adapter.interface';
+import { RendererAdapterRegistry } from '../registry/renderer-adapter.registry';
 import { Diagram } from '../../../core/diagram-engine/diagram-engine.module';
 
 export interface ReactFlowNode {
@@ -23,8 +26,16 @@ export interface ReactFlowGraph {
   edges: ReactFlowEdge[];
 }
 
-export class ReactFlowAdapter {
-  static toReactFlow(diagram: Diagram): ReactFlowGraph {
+@Injectable()
+export class ReactFlowAdapter implements IRendererAdapter<ReactFlowGraph> {
+  readonly id = 'react-flow';
+
+  constructor(private readonly registry: RendererAdapterRegistry) {
+    // Automatically register with the registry via constructor injection
+    this.registry.register(this);
+  }
+
+  adapt(diagram: Diagram): ReactFlowGraph {
     const nodes: ReactFlowNode[] = diagram.nodes.map((node) => ({
       id: node.id,
       type: node.type || 'default',

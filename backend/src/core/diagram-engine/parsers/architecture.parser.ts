@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractParser, ParserContext } from './abstract.parser';
 import { ParserRegistry } from '../registry/parser.registry';
+<<<<<<< HEAD
 import { Token, TokenType } from './lexer';
 import { NodeClassifier } from './node-classifier.service';
+=======
+import { Diagram, DiagramNode, DiagramEdge } from '../interfaces';
+>>>>>>> fdce0a732d6c96fc85c15858dec625355568c3ce
 
 @Injectable()
 export class ArchitectureParser extends AbstractParser {
@@ -18,6 +22,7 @@ export class ArchitectureParser extends AbstractParser {
 
   supports(sourceType: string): boolean {
     const type = sourceType.toLowerCase();
+<<<<<<< HEAD
     return type === 'architecture' || type === 'system' || type === 'plain_text';
   }
 
@@ -143,5 +148,97 @@ export class ArchitectureParser extends AbstractParser {
 
   private generateId(str: string): string {
     return str.replace(/[\[\]\{\}\(\):\-]/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+=======
+    return type === 'architecture' || type === 'system' || type === 'flow' || type === 'plain-text';
+  }
+
+  validate(source: string): boolean {
+    return source.trim().length > 0;
+  }
+
+  async parse(source: string, options?: Record<string, any>): Promise<Diagram> {
+    const nodes: DiagramNode[] = [];
+    const edges: DiagramEdge[] = [];
+
+    // Clean inputs and standardize flow arrow shapes to a common delimiter
+    const delimiter = '||FLOW_DELIM||';
+    const normalizedSource = source
+      .replace(/[\n\r]+/g, '\n')
+      .replace(/(?:\r?\n)?(?:↓|->|-->|=>|➔|▼)(?:\r?\n)?/g, delimiter)
+      .trim();
+
+    // Split tokens by connector delimiters
+    const tokens = normalizedSource
+      .split(delimiter)
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+
+    const nodeMap = new Map<string, string>(); // maps normalized ID to original label string
+
+    tokens.forEach((token) => {
+      const nodeId = token.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      if (!nodeMap.has(nodeId)) {
+        nodeMap.set(nodeId, token);
+      }
+    });
+
+    // Construct UDM Nodes list (without coordinates)
+    nodeMap.forEach((label, id) => {
+      nodes.push({
+        id,
+        type: this.determineNodeType(label),
+        label,
+        position: { x: 0, y: 0 },
+        style: this.getNodeStyleForLabel(label)
+      });
+    });
+
+    // Construct UDM sequential flow Edges list
+    for (let i = 0; i < tokens.length - 1; i++) {
+      const sourceId = tokens[i].toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const targetId = tokens[i + 1].toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      edges.push({
+        id: `flow_edge_${sourceId}_${targetId}_${i}`,
+        source: sourceId,
+        target: targetId,
+        animated: true,
+        style: {
+          strokeColor: '#3b82f6',
+          strokeWidth: 2
+        }
+      });
+    }
+
+    return {
+      id: `flow_${Date.now()}`,
+      title: 'Plain Text Flow Diagram',
+      nodes,
+      edges,
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        engineVersion: '1.0',
+        sourceType: 'flow'
+      }
+    };
+>>>>>>> fdce0a732d6c96fc85c15858dec625355568c3ce
+  }
+
+  private determineNodeType(label: string): string {
+    const l = label.toLowerCase();
+    if (l === 'start' || l === 'end') return 'terminal';
+    if (l.includes('decision') || l.includes('?') || l === 'check') return 'decision';
+    return 'process';
+  }
+
+  private getNodeStyleForLabel(label: string) {
+    const type = this.determineNodeType(label);
+    const styles: Record<string, any> = {
+      terminal: { backgroundColor: '#0f172a', borderColor: '#10b981', textColor: '#10b981', borderRadius: 20, borderWidth: 2 },
+      decision: { backgroundColor: '#0f172a', borderColor: '#f59e0b', textColor: '#f59e0b', borderWidth: 2 },
+      process: { backgroundColor: '#0f172a', borderColor: '#3b82f6', textColor: '#f8fafc', borderWidth: 2 }
+    };
+    return styles[type] || { backgroundColor: '#0f172a', borderColor: '#94a3b8', textColor: '#f8fafc', borderWidth: 1 };
   }
 }

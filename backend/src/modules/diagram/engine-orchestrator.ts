@@ -1,8 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ParserFactory } from '../../core/diagram-engine/factory/parser.factory';
-import { DiagramEngineRegistry } from '../../core/diagram-engine/registry/engine.registry';
 import { ReactFlowAdapter, ReactFlowGraph } from './adapters/react-flow.adapter';
-import { Diagram, FileDetectionService, DetectedFileType } from '../../core/diagram-engine/diagram-engine.module';
+import { Diagram, FileDetectionService, DetectedFileType, LayoutRegistry } from '../../core/diagram-engine/diagram-engine.module';
 
 export interface OrchestratorResult {
   diagram: Diagram;
@@ -17,7 +16,7 @@ export class EngineOrchestrator {
 
   constructor(
     private readonly parserFactory: ParserFactory,
-    private readonly engineRegistry: DiagramEngineRegistry,
+    private readonly layoutRegistry: LayoutRegistry,
     private readonly fileDetectionService: FileDetectionService
   ) {}
 
@@ -69,12 +68,19 @@ export class EngineOrchestrator {
     this.logger.debug(`Parsing source elements...`);
     let diagram = await parser.parse(source, options);
 
-    // 4. Layout Engine Execution
-    const layoutId = layoutEngineId || 'default';
-    const layoutEngine = this.engineRegistry.getLayoutEngine(layoutId);
+    // 4. Layout Engine Execution (Strategy pattern - resolvable layouts)
+    const layoutId = layoutEngineId || 'grid';
+    const layoutEngine = this.layoutRegistry.getLayout(layoutId.toLowerCase());
+    
     if (layoutEngine) {
-      this.logger.debug(`Applying layout engine settings: ${layoutId}`);
+      this.logger.debug(`Applying layout algorithm: ${layoutId}`);
       diagram = await layoutEngine.layout(diagram, options);
+    } else {
+      this.logger.warn(`Layout algorithm '${layoutId}' not found. Defaulting to grid layout.`);
+      const fallbackGrid = this.layoutRegistry.getLayout('grid');
+      if (fallbackGrid) {
+        diagram = await fallbackGrid.layout(diagram, options);
+      }
     }
 
     // 5. React Flow Adaptation

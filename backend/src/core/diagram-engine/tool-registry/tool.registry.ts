@@ -644,6 +644,25 @@ export class ToolRegistry implements OnModuleInit {
         tags: ['neural', 'network'],
         aliases: ['neural-network'],
         priority: 1
+      },
+      // Project Documentation Category
+      {
+        id: 'mindmap',
+        name: 'Mindmap',
+        description: 'Hierarchical/radial branching maps generated from markdown headers and nested lists.',
+        category: 'Project Documentation',
+        version: '1.0.0',
+        enabled: true,
+        parserId: 'markdown-parser',
+        layoutId: 'radial',
+        rendererId: 'react-flow',
+        capabilities: ['mindmap'],
+        supportedFileExtensions: ['md', 'markdown'],
+        supportedMimeTypes: ['text/markdown', 'text/plain'],
+        supportedContentPatterns: ['# ', '- ', '* '],
+        tags: ['mindmap', 'mind-map', 'brainstorm', 'outline'],
+        aliases: ['mindmap-doc', 'mind-map'],
+        priority: 1
       }
     ];
 

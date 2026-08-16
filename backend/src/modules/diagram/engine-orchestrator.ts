@@ -85,7 +85,12 @@ export class EngineOrchestrator {
     diagram = await this.aiEnhancementService.enhance(diagram, source, resolvedType, options);
 
     // 5. Layout Engine Execution (Strategy pattern - resolvable layouts)
-    const layoutId = layoutEngineId || 'grid';
+    // Mindmaps read poorly with a generic grid, so default them to the radial
+    // layout unless the caller explicitly asked for something else.
+    const defaultLayoutForType: Record<string, string> = {
+      mindmap: 'radial',
+    };
+    const layoutId = layoutEngineId || defaultLayoutForType[resolvedType.toLowerCase()] || 'grid';
     const layoutEngine = this.layoutRegistry.getLayout(layoutId.toLowerCase());
 
     if (layoutEngine) {

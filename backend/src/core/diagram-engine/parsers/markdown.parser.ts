@@ -18,7 +18,7 @@ export class MarkdownParser extends AbstractParser {
 
   supports(sourceType: string): boolean {
     const type = sourceType.toLowerCase();
-    return type === 'markdown' || type === 'md' || type === 'readme';
+    return type === 'markdown' || type === 'md' || type === 'readme' || type === 'mindmap';
   }
 
   protected async parseTokens(

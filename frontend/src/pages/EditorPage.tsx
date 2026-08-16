@@ -112,7 +112,11 @@ const EditorContent: React.FC = () => {
       id: n.id,
       label: n.data.label as string,
       type: n.type as any,
-      properties: n.data.properties as any
+      properties: n.data.properties as any,
+      columns: n.data.columns as any,
+      attributes: n.data.attributes as any,
+      methods: n.data.methods as any,
+      data: n.data
     }));
 
     const rawEdges = edges.map(e => ({
@@ -249,6 +253,19 @@ const EditorContent: React.FC = () => {
           fitView
         >
           <Background color="#cbd5e1" gap={16} size={1} className="dark:opacity-20" />
+          <svg style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0 }}>
+            <defs>
+              <marker id="uml-inheritance" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <polygon points="0,0 10,5 0,10" fill="white" stroke="#64748b" strokeWidth="1.5" />
+              </marker>
+              <marker id="uml-aggregation" viewBox="0 0 12 10" refX="12" refY="5" markerWidth="10" markerHeight="8" orient="auto-start-reverse">
+                <polygon points="0,5 6,1 12,5 6,9" fill="white" stroke="#64748b" strokeWidth="1.5" />
+              </marker>
+              <marker id="uml-composition" viewBox="0 0 12 10" refX="12" refY="5" markerWidth="10" markerHeight="8" orient="auto-start-reverse">
+                <polygon points="0,5 6,1 12,5 6,9" fill="#64748b" stroke="#64748b" strokeWidth="1" />
+              </marker>
+            </defs>
+          </svg>
         </ReactFlow>
 
         {/* Toggle Sidebar Button */}

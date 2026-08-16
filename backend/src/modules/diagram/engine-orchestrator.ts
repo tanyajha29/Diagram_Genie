@@ -4,6 +4,7 @@ import { ReactFlowGraph } from './adapters/react-flow.adapter';
 import { RendererAdapterRegistry } from './registry/renderer-adapter.registry';
 import { Diagram, FileDetectionService, DetectedFileType, LayoutRegistry } from '../../core/diagram-engine/diagram-engine.module';
 import { AiEnhancementService } from './ai-enhancement.service';
+import { normalizeUdmDiagram } from '../../core/diagram-engine/pipeline/stages/parser.stage';
 
 export interface OrchestratorResult {
   diagram: any;
@@ -73,7 +74,7 @@ export class EngineOrchestrator {
 
     this.logger.debug(`Parsing source elements (Rule-Based Parser)...`);
     const parserResult = await parser.parse(source, options);
-    let diagram: Diagram = parserResult.diagram;
+    let diagram: Diagram = normalizeUdmDiagram(parserResult.diagram);
     const warnings = [...parserResult.warnings];
 
     if (warnings.length > 0) {
@@ -82,7 +83,7 @@ export class EngineOrchestrator {
 
     // 4. AI Enhancement Service (Enhances extracted info and merges outputs)
     this.logger.debug(`Applying AI Enhancement layer...`);
-    diagram = await this.aiEnhancementService.enhance(diagram, source, resolvedType, options);
+    diagram = normalizeUdmDiagram(await this.aiEnhancementService.enhance(diagram, source, resolvedType, options));
 
     // 5. Layout Engine Execution (Strategy pattern - resolvable layouts)
     // Mindmaps read poorly with a generic grid, so default them to the radial

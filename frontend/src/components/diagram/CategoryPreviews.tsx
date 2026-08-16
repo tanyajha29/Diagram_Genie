@@ -291,7 +291,7 @@ export const CategoryPreview: React.FC<PreviewSelectorProps> = ({ id, isHovered 
   switch (id) {
     case 'software-architecture':
       return <ArchitecturePreview isHovered={isHovered} />;
-    case 'database-engineering':
+    case 'database-er':
       return <DatabasePreview isHovered={isHovered} />;
     case 'uml':
       return <UmlPreview isHovered={isHovered} />;

@@ -6,7 +6,7 @@ import { layoutRequestSchema, LayoutRequestDto } from './dto/layout-request.dto'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 
 @ApiTags('Diagram Engine API')
-@Controller()
+@Controller('diagrams')
 export class DiagramController {
   constructor(private readonly generationService: DiagramGenerationService) {}
 

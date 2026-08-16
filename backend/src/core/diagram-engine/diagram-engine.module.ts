@@ -4,8 +4,16 @@ import { ParserFactory } from './factory/parser.factory';
 import { SqlParser } from './parsers/sql.parser';
 import { MarkdownParser } from './parsers/markdown.parser';
 import { ArchitectureParser } from './parsers/architecture.parser';
-import { FlowParser } from './parsers/flow.parser';
 import { NodeClassifier } from './parsers/node-classifier.service';
+import { MarkdownOutlineParser } from './parsers/markdown-outline.parser';
+import { UmlSequenceParser } from './parsers/sequence.parser';
+import { PrismaParser } from './parsers/prisma.parser';
+import { TerraformParser } from './parsers/terraform.parser';
+import { DockerComposeParser } from './parsers/docker-compose.parser';
+import { OpenApiParser } from './parsers/openapi.parser';
+import { PipelineDslParser } from './parsers/pipeline.parser';
+import { FlowchartParser } from './parsers/flowchart.parser';
+import { CloudDslParser } from './parsers/cloud.parser';
 import { DefaultLayoutEngine } from './layout/default-layout.engine';
 import { CapabilityRegistry } from './tool-registry/capability.registry';
 import { ToolRegistry } from './tool-registry/tool.registry';
@@ -26,6 +34,10 @@ import { ParserStage } from './pipeline/stages/parser.stage';
 import { LayoutStage } from './pipeline/stages/layout.stage';
 import { RendererStage } from './pipeline/stages/renderer.stage';
 import { ResponseStage } from './pipeline/stages/response.stage';
+
+// File Detector imports
+// ... (detectors remain identical)
+
 
 // File Detector imports
 import { FileDetectorRegistry } from './file-detector/registry/file-detector.registry';
@@ -57,9 +69,16 @@ import { ForceDirectedLayout } from './layout/algorithms/force-directed.layout';
     SqlParser,
     MarkdownParser,
     ArchitectureParser,
-    FlowParser,
-    // Node classification engine
     NodeClassifier,
+    MarkdownOutlineParser,
+    UmlSequenceParser,
+    PrismaParser,
+    TerraformParser,
+    DockerComposeParser,
+    OpenApiParser,
+    PipelineDslParser,
+    FlowchartParser,
+    CloudDslParser,
     // Register layout engines (Legacy fallback)
     DefaultLayoutEngine,
     // Register file detection services

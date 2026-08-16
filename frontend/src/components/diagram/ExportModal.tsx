@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Image, FileText, Code, Check, Loader, Download } from 'lucide-react';
 import { useDiagramStore } from '../../store/diagramStore';
-import { toPng, toSvg } from 'html-to-image';
 import { motion } from 'framer-motion';
+import { ExportRenderer } from '../../utils/export';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -10,9 +10,10 @@ interface ExportModalProps {
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => {
-  const { title, nodes, edges } = useDiagramStore();
+  const { title, nodes, edges, lastDiagnostics, toolId } = useDiagramStore();
   const [exporting, setExporting] = useState(false);
   const [completed, setCompleted] = useState<string | null>(null);
+  const [exportTheme, setExportTheme] = useState<'light' | 'dark' | 'neutral'>('light');
 
   if (!isOpen) return null;
 
@@ -32,13 +33,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
     setExporting(true);
     setCompleted(null);
 
-    setTimeout(() => {
+    const startTime = Date.now();
+
+    setTimeout(async () => {
       try {
         if (format === 'json') {
           const exportData = JSON.stringify({ title, nodes, edges }, null, 2);
           triggerDownload(exportData, `${title.replace(/\s+/g, '_')}_diagram.json`, 'application/json');
+          setCompleted(format);
         } else if (format === 'mermaid') {
-          // Compile a mock Mermaid format syntax
           let mermaidText = 'graph TD\n';
           nodes.forEach((node) => {
             mermaidText += `  ${node.id}["${node.data.label}"]\n`;
@@ -47,41 +50,76 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
             mermaidText += `  ${edge.source} --> ${edge.target}\n`;
           });
           triggerDownload(mermaidText, `${title.replace(/\s+/g, '_')}_mermaid.txt`, 'text/plain');
+          setCompleted(format);
         } else if (format === 'png' || format === 'svg') {
-          // Attempt to export the viewport using html-to-image
-          const element = document.querySelector('.react-flow__viewport') as HTMLElement;
-          if (element) {
-            if (format === 'png') {
-              toPng(element, { backgroundColor: '#ffffff', quality: 0.95 }).then((dataUrl) => {
-                const link = document.createElement('a');
-                link.download = `${title.replace(/\s+/g, '_')}.png`;
-                link.href = dataUrl;
-                link.click();
-              });
-            } else {
-              toSvg(element, { backgroundColor: '#ffffff' }).then((dataUrl) => {
-                const link = document.createElement('a');
-                link.download = `${title.replace(/\s+/g, '_')}.svg`;
-                link.href = dataUrl;
-                link.click();
-              });
+          // Construct normalized layout graph from UDM parameters, decoupled from React Flow (Task 2)
+          const normalizedGraph = {
+            nodes: nodes.map(n => ({
+              id: n.id,
+              type: n.type || 'default',
+              label: n.data.label as string,
+              position: n.position,
+              width: n.width,
+              height: n.height,
+              parentId: n.parentId,
+              description: n.data.description as string,
+              properties: n.data.properties as any,
+              columns: n.data.columns as any,
+              data: n.data as any
+            })),
+            edges: edges.map(e => ({
+              id: e.id,
+              source: e.source,
+              target: e.target,
+              type: e.type,
+              label: e.label as string,
+              animated: e.animated
+            })),
+            metadata: {
+              sourceType: toolId
             }
-          } else {
-            // Fallback download if viewport ref not found
-            triggerDownload(JSON.stringify({ nodes, edges }), `${title}.json`, 'application/json');
-          }
-        } else {
-          // Simulate PDF/PlantUML exports
-          alert(`Preparing print layout for ${format.toUpperCase()} export...`);
-        }
+          };
 
-        setCompleted(format);
+          if (format === 'png') {
+            await ExportRenderer.downloadPng(normalizedGraph, `${title.replace(/\s+/g, '_')}.png`, {
+              theme: exportTheme
+            });
+          } else {
+            ExportRenderer.downloadSvg(normalizedGraph, `${title.replace(/\s+/g, '_')}.svg`, {
+              theme: exportTheme
+            });
+          }
+
+          // Record Export Telemetry Diagnostics
+          const exportDiagnostics = {
+            exportFormat: format,
+            exportTheme: exportTheme,
+            nodeCount: nodes.length,
+            edgeCount: edges.length,
+            groupCount: nodes.filter((n) => n.type === 'group' || n.parentId).length,
+            exportScale: format === 'png' ? 2 : 1,
+            renderDurationMs: Date.now() - startTime,
+            warnings: [],
+          };
+
+          useDiagramStore.setState({
+            lastDiagnostics: {
+              ...lastDiagnostics,
+              export: exportDiagnostics,
+            },
+          });
+
+          setCompleted(format);
+        }
       } catch (err) {
-        console.error('Export failed:', err);
+        console.error('Export capture failed:', err);
+        // Fallback JSON workspace file download if renderer fails
+        const exportData = JSON.stringify({ title, nodes, edges }, null, 2);
+        triggerDownload(exportData, `${title.replace(/\s+/g, '_')}_diagram.json`, 'application/json');
       } finally {
         setExporting(false);
       }
-    }, 1200); // 1.2s export loading effect
+    }, 1200);
   };
 
   const formats = [
@@ -113,6 +151,43 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
           </button>
         </div>
 
+        {/* Style Selection */}
+        <div className="space-y-2.5">
+          <label className="text-xs font-bold text-slate-600 dark:text-slate-300">Export Style</label>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => setExportTheme('light')}
+              className={`py-2 px-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer text-center ${
+                exportTheme === 'light'
+                  ? 'border-brand-orange bg-brand-orange/5 text-brand-orange'
+                  : 'border-slate-200/60 dark:border-slate-800/60 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              Light
+            </button>
+            <button
+              onClick={() => setExportTheme('dark')}
+              className={`py-2 px-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer text-center ${
+                exportTheme === 'dark'
+                  ? 'border-brand-orange bg-brand-orange/5 text-brand-orange'
+                  : 'border-slate-200/60 dark:border-slate-800/60 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              Dark
+            </button>
+            <button
+              onClick={() => setExportTheme('neutral')}
+              className={`py-2 px-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer text-center ${
+                exportTheme === 'neutral'
+                  ? 'border-brand-orange bg-brand-orange/5 text-brand-orange'
+                  : 'border-slate-200/60 dark:border-slate-800/60 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+              }`}
+            >
+              Neutral
+            </button>
+          </div>
+        </div>
+
         {/* Options list */}
         <div className="space-y-3">
           {formats.map((fmt) => {
@@ -124,7 +199,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
                 key={fmt.id}
                 onClick={() => handleExport(fmt.id)}
                 disabled={exporting}
-                className="w-full text-left p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/20 hover:border-brand-orange/30 hover:bg-white/80 dark:hover:bg-slate-900/40 flex items-center justify-between transition-all"
+                className="w-full text-left p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/20 hover:border-brand-orange/30 hover:bg-white/80 dark:hover:bg-slate-900/40 flex items-center justify-between transition-all cursor-pointer"
               >
                 <div className="flex items-center space-x-3.5">
                   <div className={`w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center ${fmt.color}`}>

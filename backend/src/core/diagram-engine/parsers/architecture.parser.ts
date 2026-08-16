@@ -18,7 +18,7 @@ export class ArchitectureParser extends AbstractParser {
 
   supports(sourceType: string): boolean {
     const type = sourceType.toLowerCase();
-    return type === 'architecture' || type === 'system' || type === 'flow' || type === 'plain_text' || type === 'plain-text';
+    return type === 'architecture' || type === 'system' || type === 'flow' || type === 'plain_text' || type === 'plain-text' || type === 'uml' || type === 'class';
   }
 
   validate(source: string): boolean {

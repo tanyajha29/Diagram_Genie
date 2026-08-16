@@ -31,7 +31,6 @@ export class ToolResolutionStage implements PipelineStage {
     if (!tool) {
       throw new Error('No suitable active tool definition found mapping to input criteria.');
     }
-
     context.selectedTool = tool.id;
     context.metadata.tool = tool; // Cache tool reference in metadata dictionary for downstream stages
   }

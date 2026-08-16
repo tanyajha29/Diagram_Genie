@@ -1,9 +1,11 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { GlobalBackground } from './components/layout/GlobalBackground';
 import { GlobalNavbar } from './components/layout/GlobalNavbar';
 import { GlobalFooter } from './components/layout/GlobalFooter';
 import { AnimatePresence } from 'framer-motion';
+import { DiagramService } from './services/diagram.service';
+import { useDiagramStore } from './store/diagramStore';
 
 // Lazy load pages for optimized performance
 const Landing = lazy(() => import('./pages/Landing'));
@@ -33,6 +35,25 @@ const PageLoader: React.FC = () => (
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isEditor = location.pathname === '/editor';
+  const { setBackendStatus } = useDiagramStore();
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await DiagramService.health();
+        if (res.status === 'ok') {
+          setBackendStatus('connected');
+        } else {
+          setBackendStatus('degraded');
+        }
+      } catch (err) {
+        setBackendStatus('offline');
+      }
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, [setBackendStatus]);
 
   return (
     <div className="flex flex-col min-h-screen relative z-10">

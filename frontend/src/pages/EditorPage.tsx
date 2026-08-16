@@ -17,7 +17,7 @@ import { ExportModal } from '../components/diagram/ExportModal';
 import { layoutUniversalDiagram } from '../utils/layouter';
 
 import { 
-  Undo2, Redo2, Save, Download, Trash2, Plus, Sparkles, ChevronLeft, ChevronRight, Settings
+  Undo2, Redo2, Save, Download, Trash2, Plus, Sparkles, ChevronLeft, ChevronRight, Settings, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,8 +40,11 @@ const EditorContent: React.FC = () => {
     past,
     future,
     saveCurrent,
-    savedDiagrams
+    savedDiagrams,
+    lastDiagnostics
   } = useDiagramStore();
+
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -170,6 +173,43 @@ const EditorContent: React.FC = () => {
               <p className="text-[9px] text-slate-400 capitalize">Engine: {toolId}</p>
             </div>
           </div>
+
+          {/* Warnings List */}
+          {lastDiagnostics?.warnings && lastDiagnostics.warnings.length > 0 && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl text-[10px] space-y-1.5">
+              <div className="font-bold flex items-center space-x-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Compiler Warnings</span>
+              </div>
+              <ul className="list-disc pl-3.5 space-y-1 max-h-24 overflow-y-auto">
+                {lastDiagnostics.warnings.map((w: any, idx: number) => (
+                  <li key={idx} className="leading-snug">{w.message || w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Collapsible Diagnostics Panel */}
+          {lastDiagnostics && (
+            <div className="space-y-2">
+              <button
+                onClick={() => setDiagnosticsOpen(!diagnosticsOpen)}
+                className="w-full flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1 hover:text-brand-orange transition-colors"
+              >
+                <span>Pipeline Diagnostics</span>
+                <span className="text-[9px] font-mono">{diagnosticsOpen ? '[-]' : '[+]'}</span>
+              </button>
+              {diagnosticsOpen && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-200/40 dark:border-slate-800/40 rounded-xl space-y-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-mono leading-relaxed">
+                  <div className="truncate" title={lastDiagnostics.requestId}>ID: {lastDiagnostics.requestId}</div>
+                  <div>Duration: {lastDiagnostics.executionDurationMs}ms</div>
+                  <div>Parser: {lastDiagnostics.parserType}</div>
+                  <div>Layout: {lastDiagnostics.layoutEngineId}</div>
+                  <div>Tool: {lastDiagnostics.toolId}</div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-3">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Recent Workspaces</h3>

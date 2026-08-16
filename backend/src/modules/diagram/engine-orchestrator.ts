@@ -1,11 +1,13 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ParserFactory } from '../../core/diagram-engine/factory/parser.factory';
-import { ReactFlowAdapter, ReactFlowGraph } from './adapters/react-flow.adapter';
-import { Diagram, FileDetectionService, DetectedFileType, LayoutRegistry } from '../../core/diagram-engine/diagram-engine.module';
+import { 
+  GenerationPipeline, 
+  GenerationContext, 
+  DiagramGenerationResponse 
+} from '../../core/diagram-engine/diagram-engine.module';
 
 export interface OrchestratorResult {
-  diagram: Diagram;
-  reactFlow: ReactFlowGraph;
+  diagram: any;
+  reactFlow: any;
   detectedType?: string;
   exportedFormats?: Record<string, string>;
 }
@@ -14,11 +16,10 @@ export interface OrchestratorResult {
 export class EngineOrchestrator {
   private readonly logger = new Logger(EngineOrchestrator.name);
 
-  constructor(
-    private readonly parserFactory: ParserFactory,
-    private readonly layoutRegistry: LayoutRegistry,
-    private readonly fileDetectionService: FileDetectionService
-  ) {}
+  constructor(private readonly pipeline: GenerationPipeline) {
+    // Validate stage registration integrity at startup
+    this.pipeline.validate();
+  }
 
   async orchestrate(
     source: string,
@@ -28,73 +29,53 @@ export class EngineOrchestrator {
     layoutEngineId?: string,
     options?: Record<string, any>
   ): Promise<OrchestratorResult> {
-    this.logger.log(`Starting generation orchestration pipeline`);
+    const requestId = `req_${Math.random().toString(36).substring(2, 9)}`;
+    this.logger.log(`Instantiating pipeline context for request [${requestId}]`);
 
-    // 1. File Type / Engine Source detection (backend decides)
-    let detected: DetectedFileType;
-    let resolvedType = sourceType;
-
-    if (!resolvedType) {
-      detected = this.fileDetectionService.detect(filename, mimeType, source);
-      
-      const typeMapping: Record<DetectedFileType, string> = {
-        [DetectedFileType.README]: 'markdown',
-        [DetectedFileType.MARKDOWN]: 'markdown',
-        [DetectedFileType.SQL]: 'sql',
-        [DetectedFileType.PRISMA]: 'sql',
-        [DetectedFileType.DOCKER_COMPOSE]: 'architecture',
-        [DetectedFileType.TERRAFORM]: 'architecture',
-        [DetectedFileType.OPENAPI]: 'architecture',
-        [DetectedFileType.YAML]: 'architecture',
-        [DetectedFileType.JSON]: 'architecture',
-        [DetectedFileType.PLAIN_TEXT]: 'architecture',
-      };
-      
-      resolvedType = typeMapping[detected] || 'architecture';
-      this.logger.log(`Auto-resolved parser type: ${resolvedType} from file category: ${detected}`);
-    } else {
-      detected = DetectedFileType.PLAIN_TEXT;
-    }
-
-    // 2. Parser Factory matching
-    const parser = this.parserFactory.createParser(resolvedType.toLowerCase());
-
-    // 3. Parser Execution & Request Validation
-    this.logger.debug(`Validating source syntax...`);
-    if (!parser.validate(source)) {
-      throw new BadRequestException(`Syntax validation failed for parser: ${parser.id}`);
-    }
-
-    this.logger.debug(`Parsing source elements...`);
-    let diagram = await parser.parse(source, options);
-
-    // 4. Layout Engine Execution (Strategy pattern - resolvable layouts)
-    const layoutId = layoutEngineId || 'grid';
-    const layoutEngine = this.layoutRegistry.getLayout(layoutId.toLowerCase());
-    
-    if (layoutEngine) {
-      this.logger.debug(`Applying layout algorithm: ${layoutId}`);
-      diagram = await layoutEngine.layout(diagram, options);
-    } else {
-      this.logger.warn(`Layout algorithm '${layoutId}' not found. Defaulting to grid layout.`);
-      const fallbackGrid = this.layoutRegistry.getLayout('grid');
-      if (fallbackGrid) {
-        diagram = await fallbackGrid.layout(diagram, options);
-      }
-    }
-
-    // 5. React Flow Adaptation
-    this.logger.debug(`Adapting diagram output to React Flow nodes...`);
-    const reactFlow = ReactFlowAdapter.toReactFlow(diagram);
-
-    // 6. Response Builder Packaging & Future Export Pipeline Hooks
-    return {
-      diagram,
-      reactFlow,
-      detectedType: detected,
-      exportedFormats: {
-        mermaid: '%% Export formatting pipeline hook placeholder',
+    // 1. Initialize context state container
+    const context: GenerationContext = {
+      requestId,
+      timestamp: new Date().toISOString(),
+      request: {
+        source,
+        sourceType,
+        filename,
+        mimeType,
+        options: {
+          ...options,
+          layoutEngineId // pass layout engine overrides if requested
+        }
       },
+      warnings: [],
+      errors: [],
+      metadata: {
+        startTime: Date.now()
+      },
+      stageExecution: {}
+    };
+
+    // 2. Execute pipeline stages sequentially
+    await this.pipeline.execute(context);
+
+    // 3. Halt and report errors if pipeline failed
+    if (context.errors.length > 0) {
+      this.logger.error(`Generation pipeline failed with ${context.errors.length} errors`);
+      throw new BadRequestException({
+        message: 'Diagram generation failed',
+        errors: context.errors
+      });
+    }
+
+    const response: DiagramGenerationResponse = context.response!;
+
+    // 4. Map final response to backward-compatible output format
+    return {
+      diagram: response.diagram,
+      reactFlow: response.reactFlow,
+      detectedType: response.diagnostics?.fileTypeDetected || context.selectedTool,
+      exportedFormats: {
+        mermaid: '%% Export formatting pipeline hook placeholder'
+      }
     };
   }
 }

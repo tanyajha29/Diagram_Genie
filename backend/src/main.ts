@@ -10,6 +10,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
+  // Enable CORS for frontend cross-origin requests
+  app.enableCors();
+
   // Use nestjs-pino logger
   const logger = app.get(PinoLogger);
   app.useLogger(logger);

@@ -35,6 +35,12 @@ interface DiagramState {
   past: DiagramHistoryState[];
   future: DiagramHistoryState[];
 
+  // Backend status & Telemetry
+  backendStatus: 'connected' | 'offline' | 'degraded';
+  lastDiagnostics: any | null;
+  setBackendStatus: (status: 'connected' | 'offline' | 'degraded') => void;
+  setLastDiagnostics: (diagnostics: any) => void;
+
   // Saved diagrams list (mock database)
   savedDiagrams: SavedDiagram[];
 
@@ -105,6 +111,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   past: [],
   future: [],
   savedDiagrams: INITIAL_SAVED_DIAGRAMS,
+  
+  backendStatus: 'connected',
+  lastDiagnostics: null,
+  setBackendStatus: (backendStatus) => set({ backendStatus }),
+  setLastDiagnostics: (lastDiagnostics) => set({ lastDiagnostics }),
 
   initNewDiagram: (toolId, title, description) => {
     set({

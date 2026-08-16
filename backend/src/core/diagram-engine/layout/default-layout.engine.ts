@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { LayoutEngine } from '../interfaces/layout-engine.interface';
+import { ILayout } from './interfaces/layout.interface';
 import { Diagram } from '../interfaces/diagram.interface';
-import { DiagramEngineRegistry } from '../registry/engine.registry';
+import { LayoutRegistry } from './registry/layout.registry';
 
 @Injectable()
-export class DefaultLayoutEngine implements LayoutEngine {
+export class DefaultLayoutEngine implements ILayout {
   readonly id = 'default';
 
-  constructor(private readonly registry: DiagramEngineRegistry) {
+  constructor(private readonly registry: LayoutRegistry) {
     // Automatically register layout engine upon DI initialization
-    this.registry.registerLayoutEngine(this);
+    this.registry.register(this);
   }
 
   async layout(diagram: Diagram, options?: Record<string, any>): Promise<Diagram> {

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ChevronDown, Menu, X, Brain, Network, Database, GitFork, FileCode2, Cloud } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useDiagramStore } from '../../store/diagramStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const GlobalNavbar: React.FC = () => {
   const { user, logout } = useAuthStore();
+  const { backendStatus } = useDiagramStore();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [toolsDropdownOpen, setToolsDropdownOpen] = useState(false);
@@ -45,22 +47,34 @@ export const GlobalNavbar: React.FC = () => {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-brand-orange/10 border border-brand-orange/20 flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:border-brand-orange/40 shadow-sm shrink-0">
-            <svg className="w-5 h-5 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3L9 9l-6 3 6 3 3 6 3-6 6-3-6-3-3-6Z" fill="currentColor" fillOpacity="0.15" />
-              <circle cx="12" cy="12" r="3.5" fill="currentColor" />
-              <circle cx="12" cy="3" r="1.5" fill="currentColor" />
-              <circle cx="12" cy="21" r="1.5" fill="currentColor" />
-              <circle cx="3" cy="12" r="1.5" fill="currentColor" />
-              <circle cx="21" cy="12" r="1.5" fill="currentColor" />
-              <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" className="opacity-30" />
-            </svg>
+        <div className="flex items-center space-x-2.5">
+          <Link to="/" className="flex items-center space-x-2.5 group">
+            <div className="w-8 h-8 rounded-xl bg-brand-orange/10 border border-brand-orange/20 flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:border-brand-orange/40 shadow-sm shrink-0">
+              <svg className="w-5 h-5 text-brand-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3L9 9l-6 3 6 3 3 6 3-6 6-3-6-3-3-6Z" fill="currentColor" fillOpacity="0.15" />
+                <circle cx="12" cy="12" r="3.5" fill="currentColor" />
+                <circle cx="12" cy="3" r="1.5" fill="currentColor" />
+                <circle cx="12" cy="21" r="1.5" fill="currentColor" />
+                <circle cx="3" cy="12" r="1.5" fill="currentColor" />
+                <circle cx="21" cy="12" r="1.5" fill="currentColor" />
+                <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" className="opacity-30" />
+              </svg>
+            </div>
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-brand-navy dark:text-white">
+              Diagram<span className="text-brand-orange">Genie</span>
+            </span>
+          </Link>
+          <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800/50 px-2 py-0.5 rounded-full text-[9px] font-semibold text-slate-500 select-none">
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              backendStatus === 'connected' 
+                ? 'bg-emerald-500 animate-pulse' 
+                : backendStatus === 'degraded' 
+                  ? 'bg-amber-500 animate-pulse' 
+                  : 'bg-rose-500 animate-pulse'
+            }`} />
+            <span className="capitalize">{backendStatus}</span>
           </div>
-          <span className="text-lg sm:text-xl font-bold tracking-tight text-brand-navy dark:text-white">
-            Diagram<span className="text-brand-orange">Genie</span>
-          </span>
-        </Link>
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">

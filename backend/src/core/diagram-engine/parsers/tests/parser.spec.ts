@@ -145,11 +145,16 @@ describe('Deterministic Parser Layer Tests', () => {
       expect(edges.length).toBe(1);
 
       const usersNode = nodes.find(n => n.id === 'users');
-      expect(usersNode?.data.columns?.id).toBe('INT');
-      expect(usersNode?.data.columns?.email).toBe('VARCHAR(255)');
+      const idCol = usersNode?.data.columns?.find((c: any) => c.name === 'id');
+      const emailCol = usersNode?.data.columns?.find((c: any) => c.name === 'email');
+      expect(idCol?.type).toBe('INT');
+      expect(idCol?.primaryKey).toBe(true);
+      expect(emailCol?.type).toBe('VARCHAR(255)');
 
       const ordersNode = nodes.find(n => n.id === 'orders');
-      expect(ordersNode?.data.columns?.user_id).toBe('INT');
+      const userIdCol = ordersNode?.data.columns?.find((c: any) => c.name === 'user_id');
+      expect(userIdCol?.type).toBe('INT');
+      expect(userIdCol?.foreignKey).toBe(true);
 
       const fkEdge = edges[0];
       expect(fkEdge.source).toBe('orders');

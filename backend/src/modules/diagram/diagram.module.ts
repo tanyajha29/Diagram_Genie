@@ -3,10 +3,6 @@ import { DiagramEngineModule } from '../../core/diagram-engine/diagram-engine.mo
 import { EngineOrchestrator } from './engine-orchestrator';
 import { DiagramGenerationService } from './diagram-generation.service';
 import { DiagramController } from './diagram.controller';
-import { RendererAdapterRegistry } from './registry/renderer-adapter.registry';
-import { ReactFlowAdapter } from './adapters/react-flow.adapter';
-import { MermaidAdapter } from './adapters/mermaid.adapter';
-import { CytoscapeAdapter } from './adapters/cytoscape.adapter';
 import { GenerationPipeline } from './generation-pipeline';
 import { AiEnhancementService } from './ai-enhancement.service';
 
@@ -16,13 +12,12 @@ import { AiEnhancementService } from './ai-enhancement.service';
   providers: [
     EngineOrchestrator,
     DiagramGenerationService,
-    RendererAdapterRegistry,
     GenerationPipeline,
     AiEnhancementService,
-    // Register renderer adapter plugins
-    ReactFlowAdapter,
-    MermaidAdapter,
-    CytoscapeAdapter,
+    // RendererAdapterRegistry + adapter plugins (react-flow, mermaid, cytoscape) are
+    // registered in DiagramEngineModule and exported from there — export/rendering is
+    // a diagram-engine concern shared by both the legacy orchestrator and the
+    // stage-based pipeline, so it lives in one place rather than being duplicated here.
   ],
 })
 export class DiagramModule {}

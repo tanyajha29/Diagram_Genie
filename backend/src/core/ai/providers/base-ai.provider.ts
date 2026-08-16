@@ -6,15 +6,21 @@ import { Logger } from '@nestjs/common';
 
 export abstract class BaseAIProvider implements IAIProvider {
   abstract readonly name: string;
-  protected readonly apiKey: string;
-  protected readonly endpoint: string;
   protected readonly logger: Logger;
 
   constructor(protected readonly configService: ConfigService) {
-    const upperName = this.name.toUpperCase();
-    this.apiKey = this.configService.get<string>(`AI_${upperName}_API_KEY`, '');
-    this.endpoint = this.configService.get<string>(`AI_${upperName}_ENDPOINT`, '');
     this.logger = new Logger(this.constructor.name);
+  }
+
+  // Computed lazily (not in the constructor) because `this.name` is set by the
+  // subclass's field initializer, which only runs *after* this base constructor
+  // returns. Reading it eagerly here would read `undefined`.
+  protected get apiKey(): string {
+    return this.configService.get<string>(`AI_${this.name.toUpperCase()}_API_KEY`, '');
+  }
+
+  protected get endpoint(): string {
+    return this.configService.get<string>(`AI_${this.name.toUpperCase()}_ENDPOINT`, '');
   }
 
   abstract generate(request: IAIRequest): Promise<IAIResponse>;

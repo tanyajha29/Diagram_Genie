@@ -10,6 +10,13 @@ import { DefaultLayoutEngine } from './layout/default-layout.engine';
 import { CapabilityRegistry } from './tool-registry/capability.registry';
 import { ToolRegistry } from './tool-registry/tool.registry';
 
+// Renderer / export adapter imports (shared by the legacy orchestrator and the
+// stage-based pipeline — lives here so both consume a single registered instance)
+import { RendererAdapterRegistry } from '../../modules/diagram/registry/renderer-adapter.registry';
+import { ReactFlowAdapter } from '../../modules/diagram/adapters/react-flow.adapter';
+import { MermaidAdapter } from '../../modules/diagram/adapters/mermaid.adapter';
+import { CytoscapeAdapter } from '../../modules/diagram/adapters/cytoscape.adapter';
+
 // Generation Pipeline imports
 import { GenerationPipeline } from './pipeline/generation-pipeline';
 import { ValidationStage } from './pipeline/stages/validation.stage';
@@ -78,6 +85,11 @@ import { ForceDirectedLayout } from './layout/algorithms/force-directed.layout';
     // Register Tool registry engines
     CapabilityRegistry,
     ToolRegistry,
+    // Register renderer/export adapter plugins
+    RendererAdapterRegistry,
+    ReactFlowAdapter,
+    MermaidAdapter,
+    CytoscapeAdapter,
     // Register individual Pipeline Stages
     ValidationStage,
     FileDetectionStage,
@@ -127,6 +139,10 @@ import { ForceDirectedLayout } from './layout/algorithms/force-directed.layout';
     CapabilityRegistry,
     ToolRegistry,
     GenerationPipeline,
+    RendererAdapterRegistry,
+    ReactFlowAdapter,
+    MermaidAdapter,
+    CytoscapeAdapter,
   ],
 })
 export class DiagramEngineModule {}

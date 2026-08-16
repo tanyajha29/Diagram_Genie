@@ -91,7 +91,7 @@ export class AIManager {
         if (schema) {
           const validationResult = schema.safeParse(parsedObject);
           if (!validationResult.success) {
-            throw new Error(`Schema validation failed: ${JSON.stringify(validationResult.error.errors)}`);
+            throw new Error(`Schema validation failed: ${JSON.stringify(validationResult.error.issues)}`);
           }
           
           // Log success transaction

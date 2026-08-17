@@ -163,9 +163,9 @@ npm run build
 
 ## Screens / Output
 
-Here is a preview screenshot of the DiagramGenie interactive workspace:
-
-![Diagram Genie Workspace](docs/LandingPage.png)
+| Landing Page | Workspace / Tools | Editor Workspace |
+| :---: | :---: | :---: |
+| ![Landing Page](docs/LandingPage.png) | ![Workspace](docs/Workspace.png) | ![Editor Workspace](docs/EditorView.png) |
 
 ---
 

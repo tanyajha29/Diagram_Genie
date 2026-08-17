@@ -81,12 +81,14 @@ export const layoutUniversalDiagram = (
       label: edge.label,
       animated,
       type: edgeType,
-      markerEnd: {
-        type: markerType as any,
-        width: 15,
-        height: 15,
-        color: '#64748b',
-      },
+      markerEnd: ['uml-inheritance', 'uml-aggregation', 'uml-composition'].includes(markerType)
+        ? markerType
+        : {
+            type: markerType as any,
+            width: 15,
+            height: 15,
+            color: '#64748b',
+          },
     });
   });
 

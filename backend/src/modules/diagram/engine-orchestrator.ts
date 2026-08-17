@@ -48,12 +48,12 @@ export class EngineOrchestrator {
         [DetectedFileType.README]: 'markdown',
         [DetectedFileType.MARKDOWN]: 'markdown',
         [DetectedFileType.SQL]: 'sql',
-        [DetectedFileType.PRISMA]: 'sql',
-        [DetectedFileType.DOCKER_COMPOSE]: 'architecture',
-        [DetectedFileType.TERRAFORM]: 'architecture',
-        [DetectedFileType.OPENAPI]: 'architecture',
-        [DetectedFileType.YAML]: 'architecture',
-        [DetectedFileType.JSON]: 'architecture',
+        [DetectedFileType.PRISMA]: 'prisma',
+        [DetectedFileType.DOCKER_COMPOSE]: 'docker-compose',
+        [DetectedFileType.TERRAFORM]: 'terraform',
+        [DetectedFileType.OPENAPI]: 'openapi',
+        [DetectedFileType.YAML]: 'yaml',
+        [DetectedFileType.JSON]: 'json',
         [DetectedFileType.PLAIN_TEXT]: 'architecture',
       };
 

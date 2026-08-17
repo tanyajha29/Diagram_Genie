@@ -54,6 +54,7 @@ import { YamlDetector } from './file-detector/detectors/yaml.detector';
 
 // Layout Engine imports
 import { LayoutRegistry } from './layout/registry/layout.registry';
+import { SemanticLayout } from './layout/algorithms/semantic.layout';
 import { TreeLayout } from './layout/algorithms/tree.layout';
 import { HierarchicalLayout } from './layout/algorithms/hierarchical.layout';
 import { GridLayout } from './layout/algorithms/grid.layout';
@@ -95,6 +96,7 @@ import { ForceDirectedLayout } from './layout/algorithms/force-directed.layout';
     YamlDetector,
     // Register extensible Layout Engine plugins
     LayoutRegistry,
+    SemanticLayout,
     TreeLayout,
     HierarchicalLayout,
     GridLayout,

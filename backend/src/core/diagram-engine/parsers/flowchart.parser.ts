@@ -43,15 +43,21 @@ export class FlowchartParser implements IParser {
 
     const addNode = (raw: string): string => {
       let label = raw.trim();
-      const hasBraces = label.includes('{') && label.includes('}');
-      
-      // Extract name from braces Choice{Is valid?} -> Choice
       let nodeLabel = label;
-      if (hasBraces) {
-        nodeLabel = label.substring(label.indexOf('{') + 1, label.indexOf('}')).trim();
+      let nodeId = label;
+
+      if (label.includes(':') && !label.startsWith('[') && !label.endsWith(']')) {
+        const parts = label.split(':');
+        nodeId = parts[0].trim();
+        nodeLabel = label.trim();
       }
 
-      const cleanLabel = label.replace(/\{.*\}/g, '').trim();
+      const hasBraces = nodeId.includes('{') && nodeId.includes('}');
+      if (hasBraces) {
+        nodeLabel = nodeId.substring(nodeId.indexOf('{') + 1, nodeId.indexOf('}')).trim();
+      }
+
+      const cleanLabel = nodeId.replace(/\{.*\}/g, '').trim();
       const cid = cleanId(cleanLabel);
       if (!cid) return '';
 
@@ -59,11 +65,14 @@ export class FlowchartParser implements IParser {
         nodes.push({
           id: cid,
           label: nodeLabel,
-          type: determineNodeType(label),
+          type: determineNodeType(nodeId),
           position: { x: 0, y: 0 },
           data: {}
         });
         nodeMap.set(cid, nodes[nodes.length - 1]);
+      } else if (label.includes(':')) {
+        const existingNode = nodeMap.get(cid)!;
+        existingNode.label = nodeLabel;
       }
       return cid;
     };

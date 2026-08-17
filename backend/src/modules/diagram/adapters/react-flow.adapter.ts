@@ -27,7 +27,7 @@ export interface ReactFlowEdge {
     width?: number;
     height?: number;
     color?: string;
-  };
+  } | string;
 }
 
 export interface ReactFlowGraph {
@@ -54,12 +54,25 @@ export class ReactFlowAdapter implements IRendererAdapter<ReactFlowGraph> {
     } else if (category.includes('db') || category.includes('sql') || category.includes('er')) {
       defaultEdgeType = 'straight'; // straight path links for ER database diagrams
     }
+    const isDbCategory = 
+      category.includes('sql') || 
+      category.includes('prisma') || 
+      category.includes('database') ||
+      category.includes('erd') ||
+      (category.includes('er') && !category.includes('parser'));
 
     const nodes: ReactFlowNode[] = diagram.nodes.map((node) => {
       const isContainer = node.type === 'container' || node.type === 'group';
+      
+      let nodeType = node.type || 'default';
+      // Map database component nodes to architecture type in non-database diagrams
+      if (!isDbCategory && (nodeType === 'database' || nodeType === 'table' || nodeType === 'database-table')) {
+        nodeType = 'architecture';
+      }
+
       return {
         id: node.id,
-        type: node.type || 'default',
+        type: nodeType,
         position: node.position,
         width: node.width,
         height: node.height,
@@ -111,12 +124,14 @@ export class ReactFlowAdapter implements IRendererAdapter<ReactFlowGraph> {
         type: edgeType,
         label: edge.label,
         animated,
-        markerEnd: {
-          type: markerType,
-          width: 15,
-          height: 15,
-          color: '#64748b',
-        },
+        markerEnd: ['uml-inheritance', 'uml-aggregation', 'uml-composition'].includes(markerType)
+          ? markerType
+          : {
+              type: markerType,
+              width: 15,
+              height: 15,
+              color: '#64748b',
+            },
       };
     });
 

@@ -384,7 +384,7 @@
           "id": "openapi-visualizer",
           "name": "OpenAPI Visualizer",
           "description": "Inspect OpenAPI/Swagger paths, request models, and response routes.",
-          "sampleData": "[/api/v1/auth/login POST] -> [Validation Schema]\n[/api/v1/auth/login POST] -> [User Auth Service]\n[User Auth Service] -> [Redis Token storage]"
+          "sampleData": "openapi: 3.0.0\ninfo:\n  title: API Gateway Ingress\n  version: 1.0.0\npaths:\n  /api/v1/auth/login:\n    post:\n      summary: User Login\n  /api/v1/users:\n    get:\n      summary: List Users"
         },
         {
           "id": "graphql-schema",

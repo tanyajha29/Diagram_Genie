@@ -75,16 +75,16 @@ export const ArchitectureNode: React.FC<any> = ({ data, selected, type }) => {
   let Icon = Network;
   let bgClass = 'bg-blue-500/10 text-blue-500';
 
-  if (nodeType === 'frontend') {
+  if (nodeType === 'frontend' || nodeType === 'actor') {
     Icon = Monitor;
     bgClass = 'bg-sky-500/10 text-sky-500';
-  } else if (nodeType === 'backend' || nodeType === 'service') {
+  } else if (nodeType === 'backend' || nodeType === 'service' || nodeType === 'api') {
     Icon = Cpu;
     bgClass = 'bg-emerald-500/10 text-emerald-500';
-  } else if (nodeType === 'database') {
+  } else if (nodeType === 'database' || nodeType === 'storage') {
     Icon = Database;
     bgClass = 'bg-indigo-500/10 text-indigo-500';
-  } else if (nodeType === 'queue') {
+  } else if (nodeType === 'queue' || nodeType === 'gateway') {
     Icon = Network;
     bgClass = 'bg-purple-500/10 text-purple-500';
   } else if (nodeType === 'external') {
@@ -481,5 +481,9 @@ export const nodeTypes = {
   sequenceActor: SequenceActorNode,
   sequenceMessage: SequenceMessageNode,
   mindmap: MindmapNode,
+  actor: ArchitectureNode,
+  gateway: ArchitectureNode,
+  api: ArchitectureNode,
+  storage: ArchitectureNode,
   default: ArchitectureNode
 };

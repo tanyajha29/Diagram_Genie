@@ -3,6 +3,7 @@ import { AbstractParser, ParserContext } from './abstract.parser';
 import { ParserRegistry } from '../registry/parser.registry';
 import { Token, TokenType } from './lexer';
 import { NodeClassifier } from './node-classifier.service';
+import { ParserResult } from './parser-result.interface';
 
 @Injectable()
 export class ArchitectureParser extends AbstractParser {
@@ -24,6 +25,142 @@ export class ArchitectureParser extends AbstractParser {
   validate(source: string): boolean {
     // Valid if source has arrows or simple content
     return !!source && source.trim().length > 0;
+  }
+
+  override async parse(source: string, options?: Record<string, any>): Promise<ParserResult> {
+    const isUml = (options?.sourceType === 'uml' || options?.sourceType === 'class' || 
+                   source.toLowerCase().includes('class ') || source.toLowerCase().includes('interface '));
+    if (isUml) {
+      return this.parseUmlClass(source, options);
+    }
+    return super.parse(source, options);
+  }
+
+  private async parseUmlClass(source: string, options?: Record<string, any>): Promise<ParserResult> {
+    const startTime = Date.now();
+    const context: ParserContext = {
+      nodes: new Map(),
+      edges: new Map(),
+      warnings: [],
+      linesParsed: source.split('\n').length,
+      nodesCreated: 0,
+      edgesCreated: 0,
+      ignoredLines: 0
+    };
+
+    const cleanId = (str: string): string => {
+      return str.trim().replace(/[\[\]\{\}\(\):\-]/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+    };
+
+    const lines = source.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    let currentClass: { id: string; name: string; type: string; attributes: string[]; methods: string[] } | null = null;
+    let edgeCounter = 1;
+
+    lines.forEach((line) => {
+      const classMatch = line.match(/^(class|interface|abstract\s+class)\s+([a-zA-Z0-9_]+)/i);
+      if (classMatch) {
+        const type = classMatch[1].toLowerCase().includes('interface') ? 'interface' : 'class';
+        const name = classMatch[2];
+        const id = cleanId(name);
+        currentClass = { id, name, type, attributes: [], methods: [] };
+
+        const extendsMatch = line.match(/(extends|implements)\s+([a-zA-Z0-9_]+)/i);
+        if (extendsMatch) {
+          const parentName = extendsMatch[2];
+          const parentId = cleanId(parentName);
+          if (!context.nodes.has(parentId)) {
+            context.nodes.set(parentId, {
+              id: parentId,
+              label: parentName,
+              type: 'class',
+              position: { x: 0, y: 0 },
+              data: { attributes: [], methods: [] }
+            });
+          }
+          const edgeId = `edge_${edgeCounter++}`;
+          this.createEdge(context, edgeId, id, parentId, undefined, 'inheritance', false);
+        }
+        return;
+      }
+
+      if (line.includes('}') && currentClass) {
+        context.nodes.set(currentClass.id, {
+          id: currentClass.id,
+          label: currentClass.name,
+          type: currentClass.type,
+          position: { x: 0, y: 0 },
+          data: {
+            attributes: currentClass.attributes,
+            methods: currentClass.methods
+          }
+        });
+        currentClass = null;
+        return;
+      }
+
+      if (currentClass) {
+        if (line.includes('(')) {
+          currentClass.methods.push(line);
+        } else if (line !== '{') {
+          currentClass.attributes.push(line);
+        }
+        return;
+      }
+
+      if (line.includes('->') || line.includes('<|--') || line.includes('--|>') || line.includes('-->') || line.includes('--')) {
+        const isInheritance = line.includes('<|--') || line.includes('--|>');
+        const delimiter = line.includes('<|--') ? '<|--' : 
+                          (line.includes('--|>') ? '--|>' : 
+                          (line.includes('-->') ? '-->' : 
+                          (line.includes('->') ? '->' : '--')));
+        const parts = line.split(delimiter);
+        if (parts.length === 2) {
+          const leftName = parts[0].trim();
+          const rightName = parts[1].trim();
+          const leftId = cleanId(leftName);
+          const rightId = cleanId(rightName);
+
+          if (leftId && rightId) {
+            if (!context.nodes.has(leftId)) {
+              context.nodes.set(leftId, {
+                id: leftId,
+                label: leftName,
+                type: 'class',
+                position: { x: 0, y: 0 },
+                data: { attributes: [], methods: [] }
+              });
+            }
+            if (!context.nodes.has(rightId)) {
+              context.nodes.set(rightId, {
+                id: rightId,
+                label: rightName,
+                type: 'class',
+                position: { x: 0, y: 0 },
+                data: { attributes: [], methods: [] }
+              });
+            }
+
+            const edgeId = `edge_${edgeCounter++}`;
+            this.createEdge(context, edgeId, leftId, rightId, undefined, isInheritance ? 'inheritance' : 'association', false);
+          }
+        }
+      }
+    });
+
+    const duration = Date.now() - startTime;
+    const diagram = this.buildDiagram(context, options);
+
+    return {
+      diagram,
+      warnings: context.warnings,
+      statistics: {
+        linesParsed: context.linesParsed,
+        nodesCreated: context.nodes.size,
+        edgesCreated: context.edges.size,
+        ignoredLines: context.ignoredLines,
+        parseDurationMs: duration
+      }
+    };
   }
 
   protected async parseTokens(

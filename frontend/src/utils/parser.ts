@@ -22,7 +22,7 @@ export interface UDMEdge {
   source: string;
   target: string;
   label?: string;
-  type?: 'default' | 'animated' | 'dashed';
+  type?: string;
   animated?: boolean;
 }
 
@@ -228,6 +228,82 @@ export const parseTextToUDM = (text: string, parserType: string): { nodes: UDMNo
           source: sId,
           target: tId
         });
+      }
+    });
+  }
+
+  else if (parserType === 'uml' || parserType === 'class') {
+    let currentClass: any = null;
+    const cleanId = (str: string): string => {
+      return str.trim().replace(/[\[\]\{\}\(\):\-]/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+    };
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      const classMatch = trimmed.match(/^(class|interface|abstract\s+class)\s+([a-zA-Z0-9_]+)/i);
+      if (classMatch) {
+        const type = classMatch[1].toLowerCase().includes('interface') ? 'interface' : 'class';
+        const name = classMatch[2];
+        const id = cleanId(name);
+        currentClass = { id, name, type, attributes: [], methods: [] };
+
+        const extendsMatch = trimmed.match(/(extends|implements)\s+([a-zA-Z0-9_]+)/i);
+        if (extendsMatch) {
+          const parentName = extendsMatch[2];
+          const parentId = cleanId(parentName);
+          addNode(parentId, parentName, 'class');
+          edges.push({
+            id: `e-uml-${id}-${parentId}`,
+            source: id,
+            target: parentId,
+            type: 'inheritance'
+          });
+        }
+        return;
+      }
+
+      if (trimmed.includes('}') && currentClass) {
+        addNode(currentClass.id, currentClass.name, currentClass.type, undefined, undefined, undefined);
+        const node = nodeMap.get(currentClass.id)!;
+        node.attributes = currentClass.attributes;
+        node.methods = currentClass.methods;
+        currentClass = null;
+        return;
+      }
+
+      if (currentClass) {
+        if (trimmed.includes('(')) {
+          currentClass.methods.push(trimmed);
+        } else if (trimmed !== '{') {
+          currentClass.attributes.push(trimmed);
+        }
+        return;
+      }
+
+      if (trimmed.includes('->') || trimmed.includes('<|--') || trimmed.includes('--|>') || trimmed.includes('-->') || trimmed.includes('--')) {
+        const isInheritance = trimmed.includes('<|--') || trimmed.includes('--|>');
+        const delimiter = trimmed.includes('<|--') ? '<|--' : 
+                          (trimmed.includes('--|>') ? '--|>' : 
+                          (trimmed.includes('-->') ? '-->' : 
+                          (trimmed.includes('->') ? '->' : '--')));
+        const parts = trimmed.split(delimiter);
+        if (parts.length === 2) {
+          const leftName = parts[0].trim();
+          const rightName = parts[1].trim();
+          const leftId = cleanId(leftName);
+          const rightId = cleanId(rightName);
+
+          if (leftId && rightId) {
+            addNode(leftId, leftName, 'class');
+            addNode(rightId, rightName, 'class');
+            edges.push({
+              id: `e-uml-${leftId}-${rightId}`,
+              source: leftId,
+              target: rightId,
+              type: isInheritance ? 'inheritance' : 'association'
+            });
+          }
+        }
       }
     });
   }
@@ -498,8 +574,91 @@ export const parseTextToUDM = (text: string, parserType: string): { nodes: UDMNo
         }
       }
     });
-  } 
+  }
   
+  else if (parserType === 'flowchart') {
+    const determineNodeType = (label: string): string => {
+      const lower = label.toLowerCase();
+      if (lower === 'start' || lower === 'end' || lower === 'finish') {
+        return 'terminal';
+      }
+      if (label.includes('{') && label.includes('}')) {
+        return 'decision';
+      }
+      return 'process';
+    };
+
+    const addLocalNode = (raw: string): string => {
+      let label = raw.trim();
+      let nodeLabel = label;
+      let nodeId = label;
+
+      if (label.includes(':') && !label.startsWith('[') && !label.endsWith(']')) {
+        const parts = label.split(':');
+        nodeId = parts[0].trim();
+        nodeLabel = label.trim();
+      }
+
+      const hasBraces = nodeId.includes('{') && nodeId.includes('}');
+      if (hasBraces) {
+        nodeLabel = nodeId.substring(nodeId.indexOf('{') + 1, nodeId.indexOf('}')).trim();
+      }
+
+      const cleanLabel = nodeId.replace(/\{.*\}/g, '').trim();
+      const cid = cleanId(cleanLabel);
+      if (!cid) return '';
+
+      addNode(cid, nodeLabel, determineNodeType(nodeId));
+      if (label.includes(':')) {
+        const existingNode = nodeMap.get(cid)!;
+        existingNode.label = nodeLabel;
+      }
+      return cid;
+    };
+
+    lines.forEach((line, idx) => {
+      if (line.includes('->')) {
+        const parts = line.split('->').map(p => p.trim());
+        let i = 0;
+        
+        while (i < parts.length - 1) {
+          const left = parts[i];
+          const right = parts[i + 1];
+
+          if (right.startsWith('[') && right.endsWith(']') && i + 2 < parts.length) {
+            const edgeLabel = right.substring(1, right.length - 1).trim();
+            const target = parts[i + 2];
+
+            const sId = addLocalNode(left);
+            const tId = addLocalNode(target);
+
+            if (sId && tId) {
+              edges.push({
+                id: `e-flow-${idx}-${sId}-${tId}`,
+                source: sId,
+                target: tId,
+                label: edgeLabel
+              });
+            }
+            i += 2;
+          } else {
+            const sId = addLocalNode(left);
+            const tId = addLocalNode(right);
+
+            if (sId && tId && !left.startsWith('[') && !right.startsWith('[')) {
+              edges.push({
+                id: `e-flow-${idx}-${sId}-${tId}`,
+                source: sId,
+                target: tId
+              });
+            }
+            i++;
+          }
+        }
+      }
+    });
+  }
+
   else {
     // Flowchart, Cloud, UML DSL and Architecture default connectors
     lines.forEach((line, idx) => {

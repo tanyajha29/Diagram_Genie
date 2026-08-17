@@ -2,6 +2,8 @@
 
 A professional diagramming platform that converts source code, configurations, schemas, and outlines into a normalized Universal Diagram Model (UDM) and renders them as beautiful interactive visual graphs.
 
+![Diagram Genie Workspace](docs/LandingPage.png)
+
 ## Overview
 
 ### The Problem

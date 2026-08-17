@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: diagram-genie-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: "*"

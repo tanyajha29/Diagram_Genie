@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AbstractParser, ParserContext } from './abstract.parser';
 import { ParserRegistry } from '../registry/parser.registry';
-<<<<<<< HEAD
 import { Token, TokenType } from './lexer';
 import { NodeClassifier } from './node-classifier.service';
-=======
-import { Diagram, DiagramNode, DiagramEdge } from '../interfaces';
->>>>>>> fdce0a732d6c96fc85c15858dec625355568c3ce
+import { ParserResult } from './parser-result.interface';
 
 @Injectable()
 export class ArchitectureParser extends AbstractParser {
@@ -22,13 +19,148 @@ export class ArchitectureParser extends AbstractParser {
 
   supports(sourceType: string): boolean {
     const type = sourceType.toLowerCase();
-<<<<<<< HEAD
-    return type === 'architecture' || type === 'system' || type === 'plain_text';
+    return type === 'architecture' || type === 'system' || type === 'flow' || type === 'plain_text' || type === 'plain-text' || type === 'uml' || type === 'class';
   }
 
   validate(source: string): boolean {
     // Valid if source has arrows or simple content
     return !!source && source.trim().length > 0;
+  }
+
+  override async parse(source: string, options?: Record<string, any>): Promise<ParserResult> {
+    const isUml = (options?.sourceType === 'uml' || options?.sourceType === 'class' || 
+                   source.toLowerCase().includes('class ') || source.toLowerCase().includes('interface '));
+    if (isUml) {
+      return this.parseUmlClass(source, options);
+    }
+    return super.parse(source, options);
+  }
+
+  private async parseUmlClass(source: string, options?: Record<string, any>): Promise<ParserResult> {
+    const startTime = Date.now();
+    const context: ParserContext = {
+      nodes: new Map(),
+      edges: new Map(),
+      warnings: [],
+      linesParsed: source.split('\n').length,
+      nodesCreated: 0,
+      edgesCreated: 0,
+      ignoredLines: 0
+    };
+
+    const cleanId = (str: string): string => {
+      return str.trim().replace(/[\[\]\{\}\(\):\-]/g, '').trim().toLowerCase().replace(/\s+/g, '_');
+    };
+
+    const lines = source.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    let currentClass: { id: string; name: string; type: string; attributes: string[]; methods: string[] } | null = null;
+    let edgeCounter = 1;
+
+    lines.forEach((line) => {
+      const classMatch = line.match(/^(class|interface|abstract\s+class)\s+([a-zA-Z0-9_]+)/i);
+      if (classMatch) {
+        const type = classMatch[1].toLowerCase().includes('interface') ? 'interface' : 'class';
+        const name = classMatch[2];
+        const id = cleanId(name);
+        currentClass = { id, name, type, attributes: [], methods: [] };
+
+        const extendsMatch = line.match(/(extends|implements)\s+([a-zA-Z0-9_]+)/i);
+        if (extendsMatch) {
+          const parentName = extendsMatch[2];
+          const parentId = cleanId(parentName);
+          if (!context.nodes.has(parentId)) {
+            context.nodes.set(parentId, {
+              id: parentId,
+              label: parentName,
+              type: 'class',
+              position: { x: 0, y: 0 },
+              data: { attributes: [], methods: [] }
+            });
+          }
+          const edgeId = `edge_${edgeCounter++}`;
+          this.createEdge(context, edgeId, id, parentId, undefined, 'inheritance', false);
+        }
+        return;
+      }
+
+      if (line.includes('}') && currentClass) {
+        context.nodes.set(currentClass.id, {
+          id: currentClass.id,
+          label: currentClass.name,
+          type: currentClass.type,
+          position: { x: 0, y: 0 },
+          data: {
+            attributes: currentClass.attributes,
+            methods: currentClass.methods
+          }
+        });
+        currentClass = null;
+        return;
+      }
+
+      if (currentClass) {
+        if (line.includes('(')) {
+          currentClass.methods.push(line);
+        } else if (line !== '{') {
+          currentClass.attributes.push(line);
+        }
+        return;
+      }
+
+      if (line.includes('->') || line.includes('<|--') || line.includes('--|>') || line.includes('-->') || line.includes('--')) {
+        const isInheritance = line.includes('<|--') || line.includes('--|>');
+        const delimiter = line.includes('<|--') ? '<|--' : 
+                          (line.includes('--|>') ? '--|>' : 
+                          (line.includes('-->') ? '-->' : 
+                          (line.includes('->') ? '->' : '--')));
+        const parts = line.split(delimiter);
+        if (parts.length === 2) {
+          const leftName = parts[0].trim();
+          const rightName = parts[1].trim();
+          const leftId = cleanId(leftName);
+          const rightId = cleanId(rightName);
+
+          if (leftId && rightId) {
+            if (!context.nodes.has(leftId)) {
+              context.nodes.set(leftId, {
+                id: leftId,
+                label: leftName,
+                type: 'class',
+                position: { x: 0, y: 0 },
+                data: { attributes: [], methods: [] }
+              });
+            }
+            if (!context.nodes.has(rightId)) {
+              context.nodes.set(rightId, {
+                id: rightId,
+                label: rightName,
+                type: 'class',
+                position: { x: 0, y: 0 },
+                data: { attributes: [], methods: [] }
+              });
+            }
+
+            const edgeId = `edge_${edgeCounter++}`;
+            this.createEdge(context, edgeId, leftId, rightId, undefined, isInheritance ? 'inheritance' : 'association', false);
+          }
+        }
+      }
+    });
+
+    const duration = Date.now() - startTime;
+    const diagram = this.buildDiagram(context, options);
+
+    return {
+      diagram,
+      warnings: context.warnings,
+      statistics: {
+        linesParsed: context.linesParsed,
+        nodesCreated: context.nodes.size,
+        edgesCreated: context.edges.size,
+        ignoredLines: context.ignoredLines,
+        parseDurationMs: duration
+      }
+    };
   }
 
   protected async parseTokens(
@@ -148,97 +280,5 @@ export class ArchitectureParser extends AbstractParser {
 
   private generateId(str: string): string {
     return str.replace(/[\[\]\{\}\(\):\-]/g, '').trim().toLowerCase().replace(/\s+/g, '_');
-=======
-    return type === 'architecture' || type === 'system' || type === 'flow' || type === 'plain-text';
-  }
-
-  validate(source: string): boolean {
-    return source.trim().length > 0;
-  }
-
-  async parse(source: string, options?: Record<string, any>): Promise<Diagram> {
-    const nodes: DiagramNode[] = [];
-    const edges: DiagramEdge[] = [];
-
-    // Clean inputs and standardize flow arrow shapes to a common delimiter
-    const delimiter = '||FLOW_DELIM||';
-    const normalizedSource = source
-      .replace(/[\n\r]+/g, '\n')
-      .replace(/(?:\r?\n)?(?:↓|->|-->|=>|➔|▼)(?:\r?\n)?/g, delimiter)
-      .trim();
-
-    // Split tokens by connector delimiters
-    const tokens = normalizedSource
-      .split(delimiter)
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
-    const nodeMap = new Map<string, string>(); // maps normalized ID to original label string
-
-    tokens.forEach((token) => {
-      const nodeId = token.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      if (!nodeMap.has(nodeId)) {
-        nodeMap.set(nodeId, token);
-      }
-    });
-
-    // Construct UDM Nodes list (without coordinates)
-    nodeMap.forEach((label, id) => {
-      nodes.push({
-        id,
-        type: this.determineNodeType(label),
-        label,
-        position: { x: 0, y: 0 },
-        style: this.getNodeStyleForLabel(label)
-      });
-    });
-
-    // Construct UDM sequential flow Edges list
-    for (let i = 0; i < tokens.length - 1; i++) {
-      const sourceId = tokens[i].toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const targetId = tokens[i + 1].toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-      edges.push({
-        id: `flow_edge_${sourceId}_${targetId}_${i}`,
-        source: sourceId,
-        target: targetId,
-        animated: true,
-        style: {
-          strokeColor: '#3b82f6',
-          strokeWidth: 2
-        }
-      });
-    }
-
-    return {
-      id: `flow_${Date.now()}`,
-      title: 'Plain Text Flow Diagram',
-      nodes,
-      edges,
-      metadata: {
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        engineVersion: '1.0',
-        sourceType: 'flow'
-      }
-    };
->>>>>>> fdce0a732d6c96fc85c15858dec625355568c3ce
-  }
-
-  private determineNodeType(label: string): string {
-    const l = label.toLowerCase();
-    if (l === 'start' || l === 'end') return 'terminal';
-    if (l.includes('decision') || l.includes('?') || l === 'check') return 'decision';
-    return 'process';
-  }
-
-  private getNodeStyleForLabel(label: string) {
-    const type = this.determineNodeType(label);
-    const styles: Record<string, any> = {
-      terminal: { backgroundColor: '#0f172a', borderColor: '#10b981', textColor: '#10b981', borderRadius: 20, borderWidth: 2 },
-      decision: { backgroundColor: '#0f172a', borderColor: '#f59e0b', textColor: '#f59e0b', borderWidth: 2 },
-      process: { backgroundColor: '#0f172a', borderColor: '#3b82f6', textColor: '#f8fafc', borderWidth: 2 }
-    };
-    return styles[type] || { backgroundColor: '#0f172a', borderColor: '#94a3b8', textColor: '#f8fafc', borderWidth: 1 };
   }
 }

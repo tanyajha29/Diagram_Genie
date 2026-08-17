@@ -121,6 +121,25 @@ describe('Deterministic Parser Layer Tests', () => {
       const edgeHeadings = edges.find(e => e.source === mainHeading?.id && e.target === subHeading?.id);
       expect(edgeHeadings).toBeDefined();
     });
+
+    it('should support the mindmap sourceType alias (regression: mindmap tool was previously unregistered)', () => {
+      expect(mdParser.supports('mindmap')).toBe(true);
+    });
+
+    it('should parse a bulleted outline into a connected node tree for mindmap use', async () => {
+      const input = `- Diagram Genie Documentation
+  - Core Modules
+    - Tokenizers
+    - Auto-layouters
+  - Supporting Views
+    - Showcase Examples`;
+
+      const result = await mdParser.parse(input);
+      const { nodes, edges } = result.diagram;
+
+      expect(nodes.length).toBeGreaterThan(1);
+      expect(edges.length).toBeGreaterThan(0);
+    });
   });
 
   describe('SqlParser', () => {
@@ -145,15 +164,39 @@ describe('Deterministic Parser Layer Tests', () => {
       expect(edges.length).toBe(1);
 
       const usersNode = nodes.find(n => n.id === 'users');
-      expect(usersNode?.data.columns?.id).toBe('INT');
-      expect(usersNode?.data.columns?.email).toBe('VARCHAR(255)');
+      const idCol = usersNode?.data.columns?.find((c: any) => c.name === 'id');
+      const emailCol = usersNode?.data.columns?.find((c: any) => c.name === 'email');
+      expect(idCol?.type).toBe('INT');
+      expect(idCol?.primaryKey).toBe(true);
+      expect(emailCol?.type).toBe('VARCHAR(255)');
 
       const ordersNode = nodes.find(n => n.id === 'orders');
-      expect(ordersNode?.data.columns?.user_id).toBe('INT');
+      const userIdCol = ordersNode?.data.columns?.find((c: any) => c.name === 'user_id');
+      expect(userIdCol?.type).toBe('INT');
+      expect(userIdCol?.foreignKey).toBe(true);
 
       const fkEdge = edges[0];
       expect(fkEdge.source).toBe('orders');
       expect(fkEdge.target).toBe('users');
+    });
+
+    it('should flag foreignKey=true for standalone FOREIGN KEY(...) constraints, not just inline REFERENCES', async () => {
+      const input = `
+        CREATE TABLE users (
+          id INT PRIMARY KEY
+        );
+        CREATE TABLE posts (
+          id INT PRIMARY KEY,
+          user_id INT NOT NULL,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+      `;
+
+      const result = await sqlParser.parse(input);
+      const postsNode = result.diagram.nodes.find(n => n.id === 'posts');
+      const userIdCol = postsNode?.data.columns?.find((c: any) => c.name === 'user_id');
+
+      expect(userIdCol?.foreignKey).toBe(true);
     });
   });
 

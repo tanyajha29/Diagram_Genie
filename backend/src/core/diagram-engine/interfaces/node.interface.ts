@@ -33,4 +33,9 @@ export interface DiagramNode {
   
   /** Explicit element bounding height */
   height?: number;
+
+  columns?: any[];
+  properties?: Record<string, string>;
+  methods?: any[];
+  attributes?: string[];
 }

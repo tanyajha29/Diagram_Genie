@@ -1,0 +1,564 @@
+{
+  "engines": [
+    {
+      "id": "software-architecture",
+      "name": "Software Architecture",
+      "description": "Design and visualize system architecture, microservices, and component mappings.",
+      "formats": [
+        {
+          "id": "architecture-dsl",
+          "label": "Architecture DSL",
+          "extensions": [".txt"],
+          "parser": "architecture",
+          "enabled": true,
+          "example": "[Client] -> [API Gateway]\n[API Gateway] -> [Auth Service]\n[API Gateway] -> [User Service]\n[User Service] -> [Database]"
+        }
+      ],
+      "presets": [
+        {
+          "id": "architecture-diagram",
+          "name": "Architecture Diagram",
+          "description": "Design software system architecture, component dependencies, and microservice relationships.",
+          "sampleData": "[Client] -> [API Gateway]\n[API Gateway] -> [Auth Service]\n[API Gateway] -> [User Service]\n[User Service] -> [Database]\n[API Gateway] -> [Queue Broker]"
+        },
+        {
+          "id": "component-diagram",
+          "name": "Component Diagram",
+          "description": "Deconstruct structural components of your application and their interface mappings.",
+          "sampleData": "[Frontend App] -> [REST API Interface]\n[REST API Interface] -> [Core Logic component]\n[Core Logic component] -> [Data Repository]"
+        },
+        {
+          "id": "deployment-diagram",
+          "name": "Deployment Diagram",
+          "description": "Map physical software deployments, node clusters, and network configurations.",
+          "sampleData": "[Edge Gateway] -> [EKS cluster Node A]\n[Edge Gateway] -> [EKS cluster Node B]\n[EKS cluster Node A] -> [Database RDS Replica]"
+        },
+        {
+          "id": "microservices-architecture",
+          "name": "Microservices Architecture",
+          "description": "Map out distributed microservices, event brokers, and database stores.",
+          "sampleData": "[API Gateway] -> [Auth service]\n[API Gateway] -> [Billing service]\n[API Gateway] -> [Shipping service]\n[Billing service] -> [Kafka Message Broker]\n[Shipping service] -> [Kafka Message Broker]"
+        },
+        {
+          "id": "system-design-diagram",
+          "name": "System Design Diagram",
+          "description": "Draft high-level system components, cache nodes, CDNs, and database layers.",
+          "sampleData": "[User Client] -> [Cloudflare CDN]\n[User Client] -> [Application Server]\n[Application Server] -> [Redis Cache]\n[Application Server] -> [Postgres Cluster]"
+        },
+        {
+          "id": "infrastructure-diagram",
+          "name": "Infrastructure Diagram",
+          "description": "Map hardware, routers, firewalls, and subnetwork segments.",
+          "sampleData": "[External Network] -> [Palo Alto Firewall]\n[Palo Alto Firewall] -> [DMZ Segment subnet]\n[DMZ Segment subnet] -> [Internal DB server]"
+        },
+        {
+          "id": "network-architecture",
+          "name": "Network Architecture",
+          "description": "Detail topologies, active switches, and IP boundary routing.",
+          "sampleData": "[VPC public subnet] -> [NAT Gateway]\n[NAT Gateway] -> [VPC private subnet]\n[VPC private subnet] -> [Private DB Instance]"
+        },
+        {
+          "id": "event-driven-architecture",
+          "name": "Event Driven Architecture",
+          "description": "Map publishers, subscribers, event stream logs, and serverless brokers.",
+          "sampleData": "[Order Service] -> [SNS Publisher Topic]\n[SNS Publisher Topic] -> [SQS Dispatcher Queue]\n[SQS Dispatcher Queue] -> [Inventory Worker service]\n[SNS Publisher Topic] -> [SQS Invoice Queue]"
+        },
+        {
+          "id": "monolithic-deconstruction",
+          "name": "Monolith Deconstruction Map",
+          "description": "Identify decoupling paths in monolithic layers to aid system migrations.",
+          "sampleData": "[Shared DB Domain] -> [Core Billing module]\n[Shared DB Domain] -> [User Profile module]\n[Core Billing module] -> [Payment Processor]\n[User Profile module] -> [Mailer utility]"
+        }
+      ]
+    },
+    {
+      "id": "database-er",
+      "name": "Database / ER",
+      "description": "Model relational databases, design schemas, and visualize foreign key links.",
+      "formats": [
+        {
+          "id": "sql-ddl",
+          "label": "SQL DDL",
+          "extensions": [".sql"],
+          "parser": "sql",
+          "enabled": true,
+          "example": "CREATE TABLE Users (\n  id INT PRIMARY KEY,\n  name VARCHAR(255)\n);\n\nCREATE TABLE Orders (\n  id INT PRIMARY KEY,\n  user_id INT REFERENCES Users(id)\n);"
+        },
+        {
+          "id": "prisma-schema",
+          "label": "Prisma Schema",
+          "extensions": [".prisma"],
+          "parser": "prisma",
+          "enabled": true,
+          "example": "model User {\n  id    Int    @id\n  posts Post[]\n}\n\nmodel Post {\n  id       Int  @id\n  authorId Int\n  author   User @relation(fields: [authorId], references: [id])\n}"
+        }
+      ],
+      "presets": [
+        {
+          "id": "er-diagram",
+          "name": "ER Diagram",
+          "description": "Generate Entity Relationship diagrams from schema definitions or SQL scripts.",
+          "sampleData": "CREATE TABLE Users (\n  id INT PRIMARY KEY,\n  name VARCHAR(50),\n  email VARCHAR(50) UNIQUE\n);\n\nCREATE TABLE Orders (\n  id INT PRIMARY KEY,\n  user_id INT REFERENCES Users(id),\n  total DECIMAL(10,2)\n);"
+        },
+        {
+          "id": "schema-visualization",
+          "name": "Schema Visualization",
+          "description": "Convert plain SQL tables definitions into interactive structural node maps.",
+          "sampleData": "CREATE TABLE Accounts (\n  id INT PRIMARY KEY,\n  balance DECIMAL(10,2),\n  owner VARCHAR(50)\n);\n\nCREATE TABLE Transactions (\n  id INT PRIMARY KEY,\n  account_id INT REFERENCES Accounts(id),\n  amount DECIMAL(10,2)\n);"
+        },
+        {
+          "id": "db-relationship",
+          "name": "Database Relationship Map",
+          "description": "Detail primary keys, foreign keys, and structural table constraint mappings.",
+          "sampleData": "CREATE TABLE Roles (\n  id INT PRIMARY KEY,\n  name VARCHAR(50)\n);\n\nCREATE TABLE AdminUsers (\n  id INT PRIMARY KEY,\n  role_id INT REFERENCES Roles(id),\n  username VARCHAR(50)\n);"
+        },
+        {
+          "id": "sql-ddl-parser",
+          "name": "SQL DDL Analyzer",
+          "description": "Parse raw DDL commands to chart database keys and table indexes.",
+          "sampleData": "CREATE TABLE Products (\n  sku VARCHAR(50) PRIMARY KEY,\n  price DECIMAL(10,2),\n  stock INT\n);\n\nCREATE TABLE Reviews (\n  id INT PRIMARY KEY,\n  product_sku VARCHAR(50) REFERENCES Products(sku),\n  rating INT\n);"
+        },
+        {
+          "id": "prisma-schema-visualizer",
+          "name": "Prisma Relation Viewer",
+          "description": "Transform Prisma relational models into interactive database maps.",
+          "sampleData": "model Profile {\n  id     Int    @id\n  bio    String\n  userId Int\n  user   User   @relation(fields: [userId], references: [id])\n}\n\nmodel User {\n  id       Int       @id\n  email    String\n  profiles Profile[]\n}"
+        },
+        {
+          "id": "postgres-schema-visualizer",
+          "name": "Postgres Schema Visualizer",
+          "description": "Generate Entity layouts targeted at PostgreSQL table properties.",
+          "sampleData": "CREATE TABLE pg_users (\n  usr_id INT PRIMARY KEY,\n  usr_name VARCHAR(50)\n);\n\nCREATE TABLE pg_sessions (\n  sid INT PRIMARY KEY,\n  usr_id INT REFERENCES pg_users(usr_id),\n  expires_at TIMESTAMP\n);"
+        },
+        {
+          "id": "mysql-schema-visualizer",
+          "name": "MySQL Schema Visualizer",
+          "description": "Inspect MySQL schemas, tracing references, indexing, and storage engines.",
+          "sampleData": "CREATE TABLE my_categories (\n  cat_id INT PRIMARY KEY,\n  cat_title VARCHAR(50)\n) ENGINE=InnoDB;\n\nCREATE TABLE my_items (\n  item_id INT PRIMARY KEY,\n  cat_id INT REFERENCES my_categories(cat_id),\n  item_name VARCHAR(50)\n) ENGINE=InnoDB;"
+        },
+        {
+          "id": "supabase-db-schema",
+          "name": "Supabase DB Schema",
+          "description": "Map Supabase public schemas, auth metadata, and user profiles.",
+          "sampleData": "CREATE TABLE auth_users (\n  id INT PRIMARY KEY,\n  email VARCHAR(50)\n);\n\nCREATE TABLE public_profiles (\n  id INT PRIMARY KEY,\n  auth_id INT REFERENCES auth_users(id),\n  display_name VARCHAR(50)\n);"
+        }
+      ]
+    },
+    {
+      "id": "uml",
+      "name": "UML Diagrams",
+      "description": "Standard UML diagrams including class structures, use cases, and interactions.",
+      "formats": [
+        {
+          "id": "uml-dsl",
+          "label": "UML DSL",
+          "extensions": [".txt"],
+          "parser": "uml",
+          "enabled": true,
+          "example": "class Animal {\n  +name: string\n  +makeSound(): void\n}\nclass Dog extends Animal {\n  +bark(): void\n}"
+        },
+        {
+          "id": "uml-sequence",
+          "label": "Sequence Diagram DSL",
+          "extensions": [".txt"],
+          "parser": "sequence",
+          "enabled": true,
+          "example": "Alice -> Bob : Hello\nBob --> Alice : Welcome back"
+        }
+      ],
+      "presets": [
+        {
+          "id": "uml-class",
+          "name": "UML Class Diagram",
+          "description": "Create class diagrams with attributes, methods, inheritance and relationships.",
+          "sampleData": "class Animal {\n  +name: string\n  +makeSound(): void\n}\n\nclass Dog extends Animal {\n  +bark(): void\n}"
+        },
+        {
+          "id": "uml-sequence",
+          "name": "UML Sequence Diagram",
+          "description": "Model sequential interactions and request-response timings.",
+          "sampleData": "Client -> Server : HTTP Request\nServer --> Client : HTTP Response"
+        },
+        {
+          "id": "uml-usecase",
+          "name": "UML Use Case Diagram",
+          "description": "Chart system boundaries, external actors, and transactional use cases.",
+          "sampleData": "class UserActor {\n  +triggerPayment(): void\n}\nclass StripeGateway {\n  +processCharge(): void\n}\nUserActor -> StripeGateway : charge_customer()"
+        },
+        {
+          "id": "uml-activity",
+          "name": "UML Activity Diagram",
+          "description": "Represent dynamic workflows, decision logic branches, and system operations sequence.",
+          "sampleData": "class StepInitialize {\n  +execute(): void\n}\nclass StepProcess {\n  +execute(): void\n}\nStepInitialize -> StepProcess : run_data_mapping()"
+        },
+        {
+          "id": "uml-state",
+          "name": "UML State Machine",
+          "description": "Visualize state transitions, actions, events, and lifecycle stages.",
+          "sampleData": "class StateIdle {\n  +onActive(): void\n}\nclass StateActive {\n  +onFinish(): void\n}\nStateIdle -> StateActive : transition_event()"
+        },
+        {
+          "id": "uml-component",
+          "name": "UML Component Diagram",
+          "description": "Map logical components, files, and physical modular libraries.",
+          "sampleData": "class CoreEngine {\n  +runParser(): void\n}\nclass RenderCanvas {\n  +mountNodes(): void\n}\nCoreEngine -> RenderCanvas : draw_flow()"
+        },
+        {
+          "id": "uml-deployment",
+          "name": "UML Deployment Diagram",
+          "description": "Detail hardware nodes, system middleware execution runtimes, and artifacts.",
+          "sampleData": "class DockerHost {\n  +launchContainer(): void\n}\nclass DbCluster {\n  +writeReplica(): void\n}\nDockerHost -> DbCluster : persist_records()"
+        },
+        {
+          "id": "uml-object",
+          "name": "UML Object Diagram",
+          "description": "Show static snapshots of system object instances and values.",
+          "sampleData": "class InstanceUser {\n  +id: 101\n  +email: \"admin@corp.internal\"\n}\nclass InstanceProfile {\n  +userId: 101\n  +theme: \"dark\"\n}\nInstanceUser -> InstanceProfile : owns"
+        }
+      ]
+    },
+    {
+      "id": "flow-process",
+      "name": "Flow & Process",
+      "description": "Map workflows, user actions, decision structures, and process charts.",
+      "formats": [
+        {
+          "id": "flow-dsl",
+          "label": "Flowchart DSL",
+          "extensions": [".txt"],
+          "parser": "flowchart",
+          "enabled": true,
+          "example": "Start -> Choice{check} -> [Yes] -> Process -> End"
+        }
+      ],
+      "presets": [
+        {
+          "id": "flowchart",
+          "name": "Flowchart",
+          "description": "Build process logic, decision matrices, and conditional workflows.",
+          "sampleData": "Start -> Process: Receive Webhook Request\nProcess -> Choice: Is Signature Valid?\nChoice -> [Yes] -> Step1: Extract Event Payload\nChoice -> [No] -> Error: Respond 401 Unauthorized\nStep1 -> End: Respond 200 OK"
+        },
+        {
+          "id": "bpmn-workflow",
+          "name": "BPMN Workflow",
+          "description": "Create business processes modeling notations, tasks, and gateways.",
+          "sampleData": "InitiateOrder -> ApproveGateway: Review order value\nApproveGateway -> [Approve] -> ExecuteBilling: Process Payment\nApproveGateway -> [Reject] -> NotifyRejection: Mail Reject Notice\nExecuteBilling -> OrderDispatch: Ship Goods"
+        },
+        {
+          "id": "dfd-diagram",
+          "name": "Data Flow Diagram - DFD",
+          "description": "Map how data flows through processes and database stores.",
+          "sampleData": "ClientInput -> ValidatorProcess: Raw User Data\nValidatorProcess -> DBStore: Encrypted Data\nDBStore -> AnalyticsEngine: Read Table records"
+        },
+        {
+          "id": "process-map",
+          "name": "Process Map",
+          "description": "Create sequential maps detailing timeline steps and operational pathways.",
+          "sampleData": "StepA: Project Kickoff -> StepB: Gather Requirements\nStepB -> StepC: Interface Design\nStepC -> StepD: Code Implementation"
+        },
+        {
+          "id": "decision-tree",
+          "name": "Decision Tree",
+          "description": "Graph conditional decisions, split branches, and classifications.",
+          "sampleData": "RootQuestion: Is user logged in? -> [No] -> RedirectToLogin: Show Page\nRootQuestion -> [Yes] -> CheckRole: Is Admin?\nCheckRole -> [Yes] -> ShowDashboard: Render Admin controls\nCheckRole -> [No] -> ShowUserHome: Render regular dashboard"
+        },
+        {
+          "id": "swimlane-flow",
+          "name": "Swimlane Flowchart",
+          "description": "Align flowchart processes based on departments or actors.",
+          "sampleData": "SalesDept: Draft Contract -> LegalDept: Review Clauses\nLegalDept -> ExecutiveDept: Approve Signature\nExecutiveDept -> SalesDept: Archive Signed Contract"
+        },
+        {
+          "id": "state-transition-flow",
+          "name": "State Transition Flow",
+          "description": "Trace transitions, triggers, and state changes.",
+          "sampleData": "StatePending -> StateProcessing: Trigger run_pipeline\nStateProcessing -> StateSuccess: On process complete\nStateProcessing -> StateFailed: On runtime exception"
+        }
+      ]
+    },
+    {
+      "id": "cloud-devops",
+      "name": "Cloud & DevOps",
+      "description": "Visualize cloud architecture networks, subnets, resources and clusters.",
+      "formats": [
+        {
+          "id": "terraform",
+          "label": "Terraform Configuration",
+          "extensions": [".tf"],
+          "parser": "terraform",
+          "enabled": true,
+          "example": "resource \"aws_vpc\" \"main\" {\n  cidr_block = \"10.0.0.0/16\"\n}\nresource \"aws_subnet\" \"sub\" {\n  vpc_id = aws_vpc.main.id\n}"
+        },
+        {
+          "id": "docker-compose",
+          "label": "Docker Compose YAML",
+          "extensions": [".yaml", ".yml"],
+          "parser": "docker-compose",
+          "enabled": true,
+          "example": "version: '3.8'\nservices:\n  web:\n    image: nginx\n    depends_on:\n      - api\n  api:\n    image: node\n    depends_on:\n      - db\n  db:\n    image: postgres"
+        },
+        {
+          "id": "cloud-dsl",
+          "label": "Cloud DSL",
+          "extensions": [".txt"],
+          "parser": "cloud",
+          "enabled": true,
+          "example": "[VPC vpc_main] contains:\n  [Subnet private_a]\n  [Subnet public_b]\n[Subnet public_b] -> [InternetGateway router]"
+        }
+      ],
+      "presets": [
+        {
+          "id": "aws-architecture",
+          "name": "AWS Cloud Architecture",
+          "description": "Map AWS infrastructures, VPCs, subnets, EC2 nodes, and database buckets.",
+          "sampleData": "[Route53 Gateway] -> [ALB LoadBalancer]\n[ALB LoadBalancer] -> [EKS ECS Container]\n[EKS ECS Container] -> [Aurora RDS database]\n[EKS ECS Container] -> [S3 File Bucket]"
+        },
+        {
+          "id": "azure-architecture",
+          "name": "Azure Cloud Architecture",
+          "description": "Visualize Microsoft Azure resources, plans, and storage accounts.",
+          "sampleData": "[Azure FrontDoor] -> [App Service Plans]\n[App Service Plans] -> [Cosmos DB Account]\n[App Service Plans] -> [Blob Storage container]"
+        },
+        {
+          "id": "kubernetes-topology",
+          "name": "Kubernetes Pod Topology",
+          "description": "Layout pods, services, ingress routing, and config maps.",
+          "sampleData": "[Nginx Ingress] -> [Frontend Service cluster]\n[Frontend Service cluster] -> [Backend Pod container]\n[Backend Pod container] -> [PostgreSQL StatefulSet]"
+        },
+        {
+          "id": "docker-compose-visualizer",
+          "name": "Docker Compose Mapper",
+          "description": "Deconstruct compose files into connected containers, networks, and volumes.",
+          "sampleData": "[ReverseProxy proxy] -> [App NodeJS Server]\n[App NodeJS Server] -> [Redis Cache memory]\n[App NodeJS Server] -> [Postgres DB volume]"
+        },
+        {
+          "id": "terraform-infra",
+          "name": "Terraform Infrastructure Map",
+          "description": "Graph resources, providers, output dependencies, and VPC variables.",
+          "sampleData": "[aws_vpc default] -> [aws_subnet private_a]\n[aws_vpc default] -> [aws_subnet public_b]\n[aws_subnet public_b] -> [aws_internet_gateway router]"
+        },
+        {
+          "id": "gcp-architecture",
+          "name": "GCP Cloud Architecture",
+          "description": "Visualize Google Cloud resources, run clusters, and PubSub streams.",
+          "sampleData": "[GCP Load Balancer] -> [Cloud Run Service]\n[Cloud Run Service] -> [Cloud SQL Database]\n[Cloud Run Service] -> [Cloud PubSub Topic]"
+        },
+        {
+          "id": "helm-chart-dependency",
+          "name": "Helm Chart Dependency Flow",
+          "description": "Map out Helm chart releases, subcharts, and value templates.",
+          "sampleData": "[Umbrella Main Chart] -> [App Subchart]\n[Umbrella Main Chart] -> [Database Dependency chart]\n[App Subchart] -> [Config Map template]"
+        },
+        {
+          "id": "ci-cd-pipeline",
+          "name": "CI/CD Pipeline Flow",
+          "description": "Visualize test suites, compilation steps, and rollout deployment pipelines.",
+          "sampleData": "[Git Commit Trigger] -> [Linter Test Stage]\n[Linter Test Stage] -> [Vite Compile Stage]\n[Vite Compile Stage] -> [Docker Build Tag Stage]\n[Docker Build Tag Stage] -> [Kubernetes Rollout Stage]"
+        }
+      ]
+    },
+    {
+      "id": "api-backend",
+      "name": "API & Backend",
+      "description": "Map REST endpoints, requests/responses, and microservice interfaces.",
+      "formats": [
+        {
+          "id": "openapi",
+          "label": "OpenAPI / Swagger",
+          "extensions": [".json", ".yaml", ".yml"],
+          "parser": "openapi",
+          "enabled": true,
+          "example": "{\n  \"openapi\": \"3.0.0\",\n  \"paths\": {\n    \"/users\": {\n      \"get\": {\n        \"responses\": {\n          \"200\": { \"description\": \"Success\" }\n        }\n      }\n    }\n  }\n}"
+        },
+        {
+          "id": "api-dsl",
+          "label": "API Routing DSL",
+          "extensions": [".txt"],
+          "parser": "architecture",
+          "enabled": true,
+          "example": "[Public Request] -> [/users GET]\n[/users GET] -> [User Database]"
+        }
+      ],
+      "presets": [
+        {
+          "id": "openapi-visualizer",
+          "name": "OpenAPI Visualizer",
+          "description": "Inspect OpenAPI/Swagger paths, request models, and response routes.",
+          "sampleData": "openapi: 3.0.0\ninfo:\n  title: API Gateway Ingress\n  version: 1.0.0\npaths:\n  /api/v1/auth/login:\n    post:\n      summary: User Login\n  /api/v1/users:\n    get:\n      summary: List Users"
+        },
+        {
+          "id": "graphql-schema",
+          "name": "GraphQL Schema Mapper",
+          "description": "Map GraphQL query pathways, mutations, resolvers, and database mappings.",
+          "sampleData": "[Query: getUser] -> [User Resolver]\n[User Resolver] -> [UserProfile Type]\n[UserProfile Type] -> [UserDatabase Store]\n[Mutation: updateEmail] -> [Email Resolver]"
+        },
+        {
+          "id": "grpc-service-map",
+          "name": "gRPC Service Topology",
+          "description": "Detail Protobuf service interfaces, RPC endpoints, and messaging packages.",
+          "sampleData": "[UserService Proto] -> [rpc GetUserByEmail]\n[rpc GetUserByEmail] -> [UserRequest message]\n[rpc GetUserByEmail] -> [UserResponse message]"
+        },
+        {
+          "id": "api-gateway-flow",
+          "name": "API Gateway Routing",
+          "description": "Chart load balancers, path routings, and downstream microservices.",
+          "sampleData": "[Public Request] -> [API Gateway Router]\n[API Gateway Router] -> [Rate Limiter filter]\n[Rate Limiter filter] -> [/orders Path Routing]\n[/orders Path Routing] -> [Order Process service]"
+        },
+        {
+          "id": "webhook-integration",
+          "name": "Webhook Sequence Flow",
+          "description": "Map external publisher webhooks, endpoint callbacks, and listener microservices.",
+          "sampleData": "[Stripe Event Publisher] -> [StripeWebhook endpoint]\n[StripeWebhook endpoint] -> [Signature Validator]\n[Signature Validator] -> [Job Queue dispatcher]\n[Job Queue dispatcher] -> [Database Ledger update]"
+        },
+        {
+          "id": "rest-api-endpoints",
+          "name": "REST Endpoints Mapping",
+          "description": "Detail HTTP route controllers, payload models, responses, and middleware pipelines.",
+          "sampleData": "[/users/me GET] -> [JWT Auth middleware]\n[JWT Auth middleware] -> [GetProfile controller]\n[GetProfile controller] -> [Database User table]"
+        },
+        {
+          "id": "oauth-auth-flow",
+          "name": "OAuth2 / OIDC Auth Flow",
+          "description": "Chart redirects, token trades, authorization codes, and authentication exchanges.",
+          "sampleData": "[Client Application] -> [Authorization Code redirect]\n[Authorization Code redirect] -> [Auth Server login screen]\n[Auth Server login screen] -> [Client Token Exchange]\n[Client Token Exchange] -> [Auth Token callback]"
+        },
+        {
+          "id": "message-queue-flow",
+          "name": "RabbitMQ/Kafka PubSub Flow",
+          "description": "Visualize topics, consumers, and data persistence streams.",
+          "sampleData": "[Event Dispatcher Server] -> [Kafka Orders Topic]\n[Kafka Orders Topic] -> [Consumer Service A partition]\n[Kafka Orders Topic] -> [Consumer Service B partition]\n[Consumer Service A partition] -> [Warehouse Inventory update]"
+        }
+      ]
+    },
+    {
+      "id": "project-documentation",
+      "name": "Documentation / Mindmap",
+      "description": "Convert README, Markdown and technical documentation into professional diagrams.",
+      "formats": [
+        {
+          "id": "markdown-outline",
+          "label": "Markdown List",
+          "extensions": [".md", ".markdown"],
+          "parser": "markdown-outline",
+          "enabled": true,
+          "example": "- Root Concept\n  - Sub Category A\n    - Leaf Detail\n  - Sub Category B"
+        }
+      ],
+      "presets": [
+        {
+          "id": "readme-visualizer",
+          "name": "README to System Map",
+          "description": "Extract modules, features, and outline nodes from markdown files.",
+          "sampleData": "# App Repository Outline\n- Web Client Frontend\n  - Landing components\n  - Monaco editor workspace\n- Server Backend API\n  - Token parser compiler\n  - Layout calculator engine"
+        },
+        {
+          "id": "mindmap-doc",
+          "name": "Mindmap Visualizer",
+          "description": "Create hierarchical branching maps for project documentation.",
+          "sampleData": "- Diagram Genie Documentation\n  - Core Modules\n    - Tokenizers\n    - Auto-layouters\n  - Supporting Views\n    - Showcase Examples\n    - Settings pages"
+        },
+        {
+          "id": "tech-doc-flow",
+          "name": "Technical Docs Flowchart",
+          "description": "Trace logical instructions and setup manuals as connected flowchart stages.",
+          "sampleData": "- Root Setup Steps\n  - Run npm install\n  - Configure env\n  - Run local host"
+        },
+        {
+          "id": "wiki-page-tree",
+          "name": "Wiki Page Tree Structure",
+          "description": "Model nested namespaces, pages indexes, and technical documentation maps.",
+          "sampleData": "- Wiki Main Category\n  - Deployment instructions\n    - Production docker-compose\n    - Staging setup config\n  - Code conventions\n    - Formatting rules"
+        },
+        {
+          "id": "changelog-timeline",
+          "name": "Changelog Timeline",
+          "description": "Trace project releases, versions updates, and features timelines.",
+          "sampleData": "- Release History v1.0.0\n  - Beta pre-release v0.9.0\n    - Sandbox canvas integration\n  - Release launch v1.0.0\n    - Collapsible sidebars\n    - Watch AI build animations"
+        },
+        {
+          "id": "feature-hierarchy",
+          "name": "Feature Hierarchy Map",
+          "description": "Model application capabilities, tracing components and structural layers.",
+          "sampleData": "- Product Capabilities\n  - Diagram engines\n    - Sequence timeline\n    - Entity ER diagram\n  - Customizations\n    - Double-click inline edits\n    - Column additions"
+        },
+        {
+          "id": "onboarding-flow",
+          "name": "Developer Onboarding Steps",
+          "description": "Trace local repository configurations and pipeline runs for new developers.",
+          "sampleData": "- JoinTeam Setup\n  - Clone Repo\n  - Install node dependencies\n  - Run test suite\n  - Push branch for code review"
+        },
+        {
+          "id": "user-story-map",
+          "name": "User Story Mapping",
+          "description": "Deconstruct epics, user activities, tasks, and releases priorities.",
+          "sampleData": "- Epic: User Registration\n  - Story A: Setup email inputs\n    - Validation checks\n  - Story B: Secure password crypts\n    - Salt hashes"
+        }
+      ]
+    },
+    {
+      "id": "ai-machine-learning",
+      "name": "AI & ML",
+      "description": "Model machine learning models, training paths, and AI pipelines.",
+      "formats": [
+        {
+          "id": "pipeline-dsl",
+          "label": "Pipeline DSL",
+          "extensions": [".txt"],
+          "parser": "pipeline",
+          "enabled": true,
+          "example": "[Dataset raw] -> [Transform clean] -> [Model train] -> [Endpoint inference]"
+        }
+      ],
+      "presets": [
+        {
+          "id": "ml-training-pipeline",
+          "name": "ML Model Training Pipeline",
+          "description": "Visualize data collections, preprocessing, modeling trains, evaluations, and registrations.",
+          "sampleData": "[Raw Data S3] -> [Spark Cleaner]\n[Spark Cleaner] -> [Feature Stores]\n[Feature Stores] -> [PyTorch Model Train]\n[PyTorch Model Train] -> [MLFlow Registry]"
+        },
+        {
+          "id": "rag-workflow",
+          "name": "RAG Workflow",
+          "description": "Graph retrieval workflows, retrieval systems, vector database checks, and LLM context prompts.",
+          "sampleData": "[User Query] -> [Cohere Embedding]\n[Cohere Embedding] -> [Pinecone Vector DB]\n[Pinecone Vector DB] -> [Retrieved Context chunks]\n[Retrieved Context chunks] -> [OpenAI GPT-4 LLM]\n[OpenAI GPT-4 LLM] -> [User Response]"
+        },
+        {
+          "id": "llm-agent-system",
+          "name": "LLM Multi-Agent System",
+          "description": "Model agent routing, tool allocations, memory databases, and conversational loops.",
+          "sampleData": "[User Input] -> [Supervisor Agent]\n[Supervisor Agent] -> [Research Agent tool]\n[Research Agent tool] -> [Web Search API]\n[Supervisor Agent] -> [Coder Agent tool]\n[Coder Agent tool] -> [Sandbox Execution]"
+        },
+        {
+          "id": "vector-search-flow",
+          "name": "Vector Search Embeddings Flow",
+          "description": "Trace documents ingestion, chunking, indexing, and vector database nearest-neighbor checks.",
+          "sampleData": "[New Wiki Document] -> [Recursive Character Chunker]\n[Recursive Character Chunker] -> [Vector Embedding service]\n[Vector Embedding service] -> [Milvus Vector Index]"
+        },
+        {
+          "id": "data-ingestion-pipeline",
+          "name": "ML Data Ingestion Pipeline",
+          "description": "Map real-time ETL runs, raw data validations, and data stores syncing.",
+          "sampleData": "[Kafka User Stream] -> [Flink Event Processor]\n[Flink Event Processor] -> [Iceberg Warehouse tables]\n[Iceberg Warehouse tables] -> [Offline Feature Training]"
+        },
+        {
+          "id": "neural-net-architecture",
+          "name": "Neural Network Architecture",
+          "description": "Detail convolutional layers, weights pools, activation functions, and output nodes.",
+          "sampleData": "[Input Layer Node] -> [Conv2d weight matrix]\n[Conv2d weight matrix] -> [ReLU Activation]\n[ReLU Activation] -> [Max Pooling layer]\n[Max Pooling layer] -> [Dense Softmax outputs]"
+        },
+        {
+          "id": "prompt-chain-flow",
+          "name": "Prompt Chain / LangChain Flow",
+          "description": "Map sequential prompts, system parameters, variables injections, and validations.",
+          "sampleData": "[Template Variables] -> [Format Prompt Template]\n[Format Prompt Template] -> [LLM Call Stage 1]\n[LLM Call Stage 1] -> [Output Parser check]\n[Output Parser check] -> [Staging Output]"
+        },
+        {
+          "id": "model-inference-sequence",
+          "name": "Model Serving & Inference Sequence",
+          "description": "Map client API gateways, Triton model servers, GPU allocations, and caching layers.",
+          "sampleData": "[Gateway Ingress] -> [FastAPI Server]\n[FastAPI Server] -> [Redis Inference cache]\n[FastAPI Server] -> [Triton Model Server GPU]\n[Triton Model Server GPU] -> [TensorRT Optimizer]"
+        }
+      ]
+    }
+  ]
+}

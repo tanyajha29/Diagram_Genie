@@ -36,7 +36,7 @@ export interface DiagramGenerationResponse {
 }
 
 export class DiagramService {
-  private static readonly BASE_URL = 'http://localhost:3000/api/v1';
+  private static readonly BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
   /**
    * Pings the health endpoint to verify backend status.

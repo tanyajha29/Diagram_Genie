@@ -20,7 +20,7 @@ export const Processing: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isOfflineFallback, setIsOfflineFallback] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<any | null>(null);
 
   const steps: PipelineStep[] = [
     { label: 'Uploading', icon: Terminal, desc: 'Sending source code to diagram engine...' },

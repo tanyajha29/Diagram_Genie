@@ -32,9 +32,9 @@ export const GlobalNavbar: React.FC = () => {
     { label: 'Architecture Diagram', path: '/tools/architecture-diagram', icon: Network, color: 'text-blue-500' },
     { label: 'ER Relation Mapping', path: '/tools/er-diagram', icon: Database, color: 'text-indigo-500' },
     { label: 'Flowcharts Builder', path: '/tools/flowchart', icon: GitFork, color: 'text-orange-500' },
-    { label: 'UML Class Designer', path: '/tools/uml-diagram', icon: FileCode2, color: 'text-violet-500' },
-    { label: 'Mind Mapping Tool', path: '/tools/mind-map', icon: Brain, color: 'text-pink-500' },
-    { label: 'Cloud Infrastructure', path: '/tools/cloud-architecture', icon: Cloud, color: 'text-sky-500' },
+    { label: 'UML Class Designer', path: '/tools/uml-class', icon: FileCode2, color: 'text-violet-500' },
+    { label: 'Mind Mapping Tool', path: '/tools/mindmap-doc', icon: Brain, color: 'text-pink-500' },
+    { label: 'Cloud Infrastructure', path: '/tools/aws-architecture', icon: Cloud, color: 'text-sky-500' },
   ];
 
   return (

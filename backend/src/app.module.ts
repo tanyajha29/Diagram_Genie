@@ -5,8 +5,10 @@ import { HealthModule } from './modules/health/health.module';
 import { DiagramEngineModule } from './core/diagram-engine/diagram-engine.module';
 import { DiagramModule } from './modules/diagram/diagram.module';
 import { AiModule } from './core/ai/ai.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [ConfigModule, LoggerModule, HealthModule, DiagramEngineModule, DiagramModule, AiModule],
+  controllers: [AppController],
 })
 export class AppModule {}

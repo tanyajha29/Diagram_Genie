@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpCode } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 
 @ApiExcludeController()
@@ -12,5 +12,11 @@ export class AppController {
       version: '2.0',
       uptime: process.uptime()
     };
+  }
+
+  @Get('favicon.ico')
+  @HttpCode(204)
+  getFavicon() {
+    return;
   }
 }

@@ -26,7 +26,7 @@ async function bootstrap() {
 
   // Enable API prefix
   const apiPrefix = configService.get<string>('API_PREFIX') || 'api';
-  app.setGlobalPrefix(apiPrefix, { exclude: ['/'] });
+  app.setGlobalPrefix(apiPrefix, { exclude: ['/', '/favicon.ico'] });
 
   // Enable URI-based versioning
   app.enableVersioning({

@@ -17,7 +17,7 @@ import { ExportModal } from '../components/diagram/ExportModal';
 import { layoutUniversalDiagram } from '../utils/layouter';
 
 import { 
-  Undo2, Redo2, Save, Download, Trash2, Plus, Sparkles, ChevronLeft, Settings, AlertTriangle, PanelLeft, Maximize, Terminal, RefreshCcw, Minus
+  Undo2, Redo2, Save, Download, Trash2, Plus, Sparkles, ChevronLeft, Settings, AlertTriangle, PanelLeft, Maximize, RefreshCcw, Minus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -89,21 +89,57 @@ const EditorContent: React.FC = () => {
   // Database field additions
   const handleAddDbField = () => {
     if (!selectedNodeId || !selectedNode || !newPropKey) return;
+    
+    // Update properties Record
     const currentProps = (selectedNode.data?.properties as Record<string, string>) || {};
     const updatedProps = { ...currentProps, [newPropKey]: newPropVal || 'VARCHAR' };
+
+    // Update columns Array
+    const currentCols = Array.isArray(selectedNode.data?.columns) ? selectedNode.data.columns : [];
+    const filteredCols = currentCols.filter((c: any) => c.name !== newPropKey);
+    const updatedCols = [...filteredCols, { name: newPropKey, type: newPropVal || 'VARCHAR' }];
     
-    updateNodeLabel(selectedNodeId, selectedNode.data.label as string, updatedProps);
+    setNodes(nodes.map(n => {
+      if (n.id === selectedNodeId) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            properties: updatedProps,
+            columns: updatedCols
+          }
+        };
+      }
+      return n;
+    }));
+    
     setNewPropKey('');
     setNewPropVal('');
   };
 
   const handleRemoveDbField = (keyToRemove: string) => {
     if (!selectedNodeId || !selectedNode) return;
+    
     const currentProps = (selectedNode.data?.properties as Record<string, string>) || {};
     const updatedProps = { ...currentProps };
     delete updatedProps[keyToRemove];
-    
-    updateNodeLabel(selectedNodeId, selectedNode.data.label as string, updatedProps);
+
+    const currentCols = Array.isArray(selectedNode.data?.columns) ? selectedNode.data.columns : [];
+    const updatedCols = currentCols.filter((c: any) => c.name !== keyToRemove);
+
+    setNodes(nodes.map(n => {
+      if (n.id === selectedNodeId) {
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            properties: updatedProps,
+            columns: updatedCols
+          }
+        };
+      }
+      return n;
+    }));
   };
 
   const handleTriggerAutoLayout = () => {
@@ -147,7 +183,94 @@ const EditorContent: React.FC = () => {
     setEditLabel(newNode.data.label as string);
   };
 
-  const totalTables = nodes.filter(n => n.type === 'database' || n.type === 'table').length || nodes.length;
+  // Find the category and label dynamically based on toolId!
+  const getDiagramMeta = () => {
+    const tid = toolId?.toLowerCase() || '';
+    
+    // Check database-er / er / prisma / sql
+    if (tid.includes('database') || tid.includes('er') || tid.includes('sql') || tid.includes('prisma') || tid === '1') {
+      return {
+        tag: 'Database',
+        icon: '🗄',
+        typeLabel: 'Database ER',
+        nodeLabel: 'Tables',
+        edgeLabel: 'Relationships',
+        nodeCount: nodes.filter(n => n.type === 'database' || n.type === 'table').length || nodes.length
+      };
+    }
+    
+    // Check uml
+    if (tid.includes('uml') || tid.includes('sequence')) {
+      return {
+        tag: 'UML',
+        icon: '📦',
+        typeLabel: 'UML Diagram',
+        nodeLabel: 'Classes',
+        edgeLabel: 'Associations',
+        nodeCount: nodes.filter(n => n.type === 'uml' || n.type === 'class').length || nodes.length
+      };
+    }
+    
+    // Check flow / flowchart / process
+    if (tid.includes('flow') || tid.includes('process') || tid.includes('transition')) {
+      return {
+        tag: 'Flowchart',
+        icon: '🔄',
+        typeLabel: 'Flowchart',
+        nodeLabel: 'Steps',
+        edgeLabel: 'Transitions',
+        nodeCount: nodes.length
+      };
+    }
+
+    // Check cloud / devops / aws / azure / terraform / docker-compose
+    if (tid.includes('cloud') || tid.includes('aws') || tid.includes('terraform') || tid.includes('docker') || tid.includes('kubernetes')) {
+      return {
+        tag: 'Cloud & DevOps',
+        icon: '☁',
+        typeLabel: 'Cloud Architecture',
+        nodeLabel: 'Resources',
+        edgeLabel: 'Connections',
+        nodeCount: nodes.length
+      };
+    }
+
+    // Check AI & ML
+    if (tid.includes('ai') || tid.includes('machine') || tid.includes('llm') || tid.includes('pipeline') || tid.includes('ml')) {
+      return {
+        tag: 'AI & ML',
+        icon: '🤖',
+        typeLabel: 'AI/ML Pipeline',
+        nodeLabel: 'Nodes',
+        edgeLabel: 'Data Flows',
+        nodeCount: nodes.length
+      };
+    }
+
+    // Check API & Backend
+    if (tid.includes('api') || tid.includes('backend') || tid.includes('rest') || tid.includes('graphql')) {
+      return {
+        tag: 'API & Backend',
+        icon: '🔌',
+        typeLabel: 'API Integration Map',
+        nodeLabel: 'Endpoints',
+        edgeLabel: 'Calls',
+        nodeCount: nodes.length
+      };
+    }
+
+    // Fallback: Software Architecture
+    return {
+      tag: 'Architecture',
+      icon: '🏗',
+      typeLabel: 'System Map',
+      nodeLabel: 'Nodes',
+      edgeLabel: 'Relationships',
+      nodeCount: nodes.length
+    };
+  };
+
+  const meta = getDiagramMeta();
 
   return (
     <div className="w-screen h-screen flex flex-col bg-[#0B0F19] text-slate-200 font-sans antialiased overflow-hidden select-none">
@@ -169,7 +292,7 @@ const EditorContent: React.FC = () => {
           
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`p-1.5 rounded-lg border border-slate-850 hover:text-brand-orange transition-all duration-200 cursor-pointer ${
+            className={`p-1.5 rounded-lg border border-slate-855 hover:text-brand-orange transition-all duration-200 cursor-pointer ${
               sidebarOpen ? 'bg-slate-800/80 text-brand-orange border-slate-700' : 'bg-slate-900/40 text-slate-400 border-slate-800'
             }`}
             title="Toggle Sidebar"
@@ -250,7 +373,7 @@ const EditorContent: React.FC = () => {
         <div className="flex items-center space-x-2">
           <button
             onClick={saveCurrent}
-            className="px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-850 text-slate-300 hover:text-white transition-all flex items-center space-x-1.5 cursor-pointer text-xs font-bold"
+            className="px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/50 hover:bg-slate-855 text-slate-300 hover:text-white transition-all flex items-center space-x-1.5 cursor-pointer text-xs font-bold"
             title="Save Project"
           >
             <Save className="w-3.5 h-3.5 text-brand-orange" />
@@ -281,13 +404,13 @@ const EditorContent: React.FC = () => {
               <div className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl space-y-1.5 relative overflow-hidden group">
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-extrabold bg-brand-orange/10 text-brand-orange px-1.5 py-0.5 rounded uppercase tracking-wider">
-                    {toolId?.includes('db') || toolId?.includes('er') ? 'Database' : 'Architecture'}
+                    {meta.tag}
                   </span>
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                 </div>
-                <h4 className="text-xs font-bold text-slate-200 truncate">{title}</h4>
+                <h4 className="text-xs font-bold text-slate-205 truncate">{title}</h4>
                 <p className="text-[9px] text-slate-405 flex items-center space-x-1">
-                  <Terminal className="w-3 h-3 text-brand-orange/70" />
+                  <span className="text-xs">{meta.icon}</span>
                   <span className="truncate">Engine: {toolId}</span>
                 </p>
               </div>
@@ -301,15 +424,15 @@ const EditorContent: React.FC = () => {
                   <div className="text-[9px] font-extrabold text-slate-550 uppercase tracking-wider">Metrics</div>
                   <div className="flex items-center space-x-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-brand-orange/60" />
-                    <span>{totalTables} {toolId?.includes('db') || toolId?.includes('er') ? 'Tables' : 'Nodes'}</span>
+                    <span>{meta.nodeCount} {meta.nodeLabel}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/60" />
-                    <span>{edges.length} Relationships</span>
+                    <span>{edges.length} {meta.edgeLabel}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-500/60" />
-                    <span>Type: {toolId?.includes('db') || toolId?.includes('er') ? 'Database ER' : 'System Map'}</span>
+                    <span>Type: {meta.typeLabel}</span>
                   </div>
                 </div>
               </div>
@@ -485,7 +608,7 @@ const EditorContent: React.FC = () => {
 
                 {/* Label Field */}
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Label Title</label>
+                  <label className="text-[9px] font-bold uppercase text-slate-550 tracking-wider">Label Title</label>
                   <input
                     type="text"
                     value={editLabel}
@@ -502,16 +625,31 @@ const EditorContent: React.FC = () => {
                     
                     {/* List of current fields */}
                     <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                      {Object.entries((selectedNode.data?.properties as Record<string, string>) || {}).map(([key, val]) => (
-                        <div key={key} className="flex items-center justify-between bg-slate-950/20 px-2.5 py-1.5 rounded-lg border border-slate-800/50 text-[10px] font-mono text-slate-355">
-                          <span>{key}: {val}</span>
+                      {/* Render columns array */}
+                      {Array.isArray(selectedNode.data?.columns) && selectedNode.data.columns.map((col: any) => (
+                        <div key={col.name} className="flex items-center justify-between bg-slate-950/20 px-2.5 py-1.5 rounded-lg border border-slate-800/50 text-[10px] font-mono text-slate-355">
+                          <span className="truncate max-w-[150px]">{col.name}: {col.type}</span>
                           <button 
-                            onClick={() => handleRemoveDbField(key)}
-                            className="text-slate-500 hover:text-red-500 transition-colors ml-2"
+                            onClick={() => handleRemoveDbField(col.name)}
+                            className="text-slate-500 hover:text-red-500 transition-colors ml-2 cursor-pointer shrink-0"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
                         </div>
+                      ))}
+                      
+                      {/* Render properties fallback if columns is empty */}
+                      {(!Array.isArray(selectedNode.data?.columns) || selectedNode.data.columns.length === 0) && 
+                        Object.entries((selectedNode.data?.properties as Record<string, string>) || {}).map(([key, val]) => (
+                          <div key={key} className="flex items-center justify-between bg-slate-950/20 px-2.5 py-1.5 rounded-lg border border-slate-800/50 text-[10px] font-mono text-slate-355">
+                            <span className="truncate max-w-[150px]">{key}: {val}</span>
+                            <button 
+                              onClick={() => handleRemoveDbField(key)}
+                              className="text-slate-500 hover:text-red-500 transition-colors ml-2 cursor-pointer shrink-0"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                       ))}
                     </div>
 
@@ -560,8 +698,8 @@ const EditorContent: React.FC = () => {
           <span>Engine: <span className="text-slate-350 capitalize">{toolId}</span></span>
         </div>
         <div className="flex items-center space-x-4">
-          <span>{totalTables} Nodes</span>
-          <span>{edges.length} Relationships</span>
+          <span>{meta.nodeCount} {meta.nodeLabel}</span>
+          <span>{edges.length} {meta.edgeLabel}</span>
         </div>
       </footer>
 
